@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music®</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="static/imgs/icon.ico">
+</head>
+<body>
+    <div id="app">
+
+        <img src="{{ url_for('static', filename='imgs/logo.png') }}" alt="YT Music Clone Logo" class="logo" id="logo">
+
+        <header>
+            <div class="search-bar" onclick="activateSearch()">
+                <div class="search-container">
+                    <img src="{{ url_for('static', filename='imgs/search-icon.png') }}" alt="Search Icon" class="search-icon">
+                    <input type="text" placeholder="Busca una canción..." id="search-input" oninput="showSearchResults()">
+                </div>
+            </div>
+        </header>
+
+        <div class="sidebar" id="sidebar">
+            <button id="toggle-button" onclick="toggleSidebar()">☰</button>
+            <nav>
+                <ul>
+                    <li><a href="/"><img src="{{ url_for('static', filename='imgs/home-icon.png') }}" alt="Home"><span class="icon-text">Home</span></a></li>
+                    <li><a href="#"><img src="{{ url_for('static', filename='imgs/library-icon.png') }}" alt="Library"><span class="icon-text">Biblioteca</span></a></li>
+                    <li><a href="#"><img src="{{ url_for('static', filename='imgs/search-icon.png') }}" alt="Search"><span class="icon-text">Buscar</span></a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <main> 
+            {% for categoria, items in categorias.items() %}
+                <div class="category">
+                    <h2>{{ categoria|capitalize }}</h2>
+                    <div class="items">
+                        {% if items %}
+                            {% for item in items %}
+                                <div class="cover" onclick="playSong('{{ item.audio_file }}')">
+                                    {% if item.cover_url %}
+                                        <img src="{{ item.cover_url }}" alt="{{ item.title }}">
+                                    {% else %}
+                                        <img src="static/imgs/placeholder.gif" alt="Loading">
+                                    {% endif %}
+                                    <div class="title">
+                                        {% if item.title %}
+                                            {{ item.title }}
+                                        {% else %}
+                                            Loading...
+                                        {% endif %}
+                                    </div>
+                                    <div class="artist">
+                                        {% if item.artist %}
+                                            {{ item.artist }}
+                                        {% else %}
+                                            Unknown
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p>No hay álbumes disponibles en esta categoría.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </main>
+
+        <!-- Resultados de búsqueda -->
+        <div class="search-results" id="search-results">
+            <div class="results-container">
+                <div class="artists-results">
+                    <h3>Artistas</h3>
+                    <ul id="artists-list">
+                        <!-- Los resultados de los artistas aparecerán aquí -->
+                    </ul>
+                </div>
+                <div class="albums-results">
+                    <h3>Álbumes</h3>
+                    <ul id="albums-list">
+                        <!-- Los resultados de las canciones aparecerán aquí -->
+                    </ul>
+                </div>
+                <div class="songs-results">
+                    <h3>Canciones</h3>
+                    <ul id="songs-list">
+                        <!-- Los resultados de las canciones aparecerán aquí -->
+                    </ul>
+                </div>
+            </div>
+            <a href="#" id="view-all-results">Ver todos los resultados</a>
+        </div>
+
+        <footer>
+            <div class="player">
+
+                <div class="left-section">
+                    <img src="static/imgs/album-placeholder.png" alt="Album Cover">
+                    <div class="song-info">
+                        <span class="song-title">Escoge una canción</span>
+                        <span class="song-artist">;P</span>
+                    </div>
+                </div>
+
+                <div class="center-section">
+                    <div class="controls">
+                        <svg data-encore-id="icon" role="img" aria-hidden="true" viewBox="0 0 16 16" class="control-icon">
+                            <path d="M13.151.922a.75.75 0 1 0-1.06 1.06L13.109 3H11.16a3.75 3.75 0 0 0-2.873 1.34l-6.173 7.356A2.25 2.25 0 0 1 .39 12.5H0V14h.391a3.75 3.75 0 0 0 2.873-1.34l6.173-7.356a2.25 2.25 0 0 1 1.724-.804h1.947l-1.017 1.018a.75.75 0 0 0 1.06 1.06L15.98 3.75 13.15.922zM.391 3.5H0V2h.391c1.109 0 2.16.49 2.873 1.34L4.89 5.277l-.979 1.167-1.796-2.14A2.25 2.25 0 0 0 .39 3.5z"></path><path d="m7.5 10.723.98-1.167.957 1.14a2.25 2.25 0 0 0 1.724.804h1.947l-1.017-1.018a.75.75 0 1 1 1.06-1.06l2.829 2.828-2.829 2.828a.75.75 0 1 1-1.06-1.06L13.109 13H11.16a3.75 3.75 0 0 1-2.873-1.34l-.787-.938z"></path>
+                        </svg>
+                        <svg data-encore-id="icon" role="img" aria-hidden="true" viewBox="0 0 16 16" class="control-icon" onclick="previousSong()">
+                            <path d="M3.3 1a.7.7 0 0 1 .7.7v5.15L13.95 1.107a.7.7 0 0 1 1.05.605v12.576a.7.7 0 0 1-1.05.607L4 9.148V14.3a.7.7 0 0 1-.7.7H1.7a.7.7 0 0 1-.7-.7V1.7A.7.7 0 0 1 1.7 1h1.6z"></path>
+                        </svg>
+
+                        <button class="play-button" aria-label="Reproducir" onclick="togglePlay()">
+                            <svg viewBox="0 0 16 16" class="play-icon">
+                                <path d="M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288V1.713z"></path>
+                                <!-- <path d="M2.7 1a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7H2.7zm8 0a.7.7 0 0 0-.7.7v12.6a.7.7 0 0 0 .7.7h2.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7h-2.6z"></path>-->
+                            </svg>
+                        </button>                        
+                        
+                        <svg data-encore-id="icon" role="img" aria-hidden="true" viewBox="0 0 16 16" class="control-icon" onclick="nextSong()">
+                            <path d="M12.7 1a.7.7 0 0 0-.7.7v5.15L2.05 1.107A.7.7 0 0 0 1 1.712v12.575a.7.7 0 0 0 1.05.607L12 9.149V14.3a.7.7 0 0 0 .7.7h1.6a.7.7 0 0 0 .7-.7V1.7a.7.7 0 0 0-.7-.7h-1.6z"></path>
+                        </svg>
+                        <svg data-encore-id="icon" role="img" aria-hidden="true" viewBox="0 0 16 16" class="control-icon">
+                            <path d="M0 4.75A3.75 3.75 0 0 1 3.75 1h8.5A3.75 3.75 0 0 1 16 4.75v5a3.75 3.75 0 0 1-3.75 3.75H9.81l1.018 1.018a.75.75 0 1 1-1.06 1.06L6.939 12.75l2.829-2.828a.75.75 0 1 1 1.06 1.06L9.811 12h2.439a2.25 2.25 0 0 0 2.25-2.25v-5a2.25 2.25 0 0 0-2.25-2.25h-8.5A2.25 2.25 0 0 0 1.5 4.75v5A2.25 2.25 0 0 0 3.75 12H5v1.5H3.75A3.75 3.75 0 0 1 0 9.75v-5z"></path>
+                            <!--<path d="M0 4.75A3.75 3.75 0 0 1 3.75 1h.75v1.5h-.75A2.25 2.25 0 0 0 1.5 4.75v5A2.25 2.25 0 0 0 3.75 12H5v1.5H3.75A3.75 3.75 0 0 1 0 9.75v-5zM12.25 2.5h-.75V1h.75A3.75 3.75 0 0 1 16 4.75v5a3.75 3.75 0 0 1-3.75 3.75H9.81l1.018 1.018a.75.75 0 1 1-1.06 1.06L6.939 12.75l2.829-2.828a.75.75 0 1 1 1.06 1.06L9.811 12h2.439a2.25 2.25 0 0 0 2.25-2.25v-5a2.25 2.25 0 0 0-2.25-2.25z"></path><path d="M9.12 8V1H7.787c-.128.72-.76 1.293-1.787 1.313V3.36h1.57V8h1.55z"></path>-->
+                        </svg>
+                    </div>
+
+                    <div class="progress-bar">
+                        <span id="current-time">0:00</span>
+                        <div class="progress">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <span id="total-time">0:00</span>
+                    </div>
+                </div>
+
+                <div class="right-section">
+                    <svg data-encore-id="icon" role="img" aria-hidden="true" viewBox="0 0 16 16" class="control-icon">
+                        <path d="M9.741.85a.75.75 0 0 1 .375.65v13a.75.75 0 0 1-1.125.65l-6.925-4a3.642 3.642 0 0 1-1.33-4.967 3.639 3.639 0 0 1 1.33-1.332l6.925-4a.75.75 0 0 1 .75 0zm-6.924 5.3a2.139 2.139 0 0 0 0 3.7l5.8 3.35V2.8l-5.8 3.35zm8.683 4.29V5.56a2.75 2.75 0 0 1 0 4.88z"></path><path d="M11.5 13.614a5.752 5.752 0 0 0 0-11.228v1.55a4.252 4.252 0 0 1 0 8.127v1.55z"></path>
+                    </svg>
+                </div>
+            </div>
+        </footer>
+        
+
+    </div>
+
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+
+</body>
+</html>

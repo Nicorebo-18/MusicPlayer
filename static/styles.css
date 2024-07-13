@@ -1,0 +1,619 @@
+@font-face {
+    font-family: 'SF Pro Text Regular';
+    src: url('fonts/SF-Pro-Text-Regular.otf') format('opentype');
+    /* Puedes incluir más formatos de fuentes aquí si es necesario */
+}
+
+@font-face {
+    font-family: 'SF Pro Text Semibold';
+    src: url('fonts/SF-Pro-Text-Semibold.otf') format('opentype');
+    /* Puedes incluir más formatos de fuentes aquí si es necesario */
+}
+
+@font-face {
+    font-family: 'CircularSp';
+    src: url(fonts/CircularSp.ttf);
+}
+
+:root {
+    --encore-body-font-stack: "CircularSp";
+    --fallback-fonts: sans-serif;
+    --main-color: #e8a806; /*#1db954;*/
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+body {
+    overflow: hidden; /* Ocultar el scroll general del body */
+    font-family: var(--encore-body-font-stack), var(--fallback-fonts);
+    font-weight: normal;
+    font-style: normal;
+    color: white;
+    background: rgb(20, 20, 20);
+    user-select: none;
+}
+
+input, textarea {
+    user-select: text;
+    cursor: text;
+}
+
+
+/*background: linear-gradient(
+            to right, 
+            rgba(0, 119, 255, 0.1) 0%,    /* Azul suave en la esquina superior izquierda 
+            rgb(20, 20, 20) 10%,         /* Negro sólido desde el 20% 
+            rgb(20, 20, 20) 90%,         /* Negro sólido hasta el 80% 
+            rgba(255, 165, 0, 0.1) 100%  /* Naranja suave en la esquina superior derecha 
+        ),
+        rgb(20, 20, 20);  /* Color sólido de fondo 
+    background-size: 100% 100%; /* Ajusta el tamaño del fondo completo 
+    background-repeat: no-repeat; /* Evita que los gradientes se repitan */
+
+h1, h2, h3, h4, h5, h6, button, input  {
+    font-family: 'SF Pro Text Semibold', Arial, sans-serif;
+}
+
+.logo {
+    position: fixed; /* Cambiar a fixed para que se quede en la parte superior */
+    top: 25px; /* Ajusta la posición según tu diseño */
+    left: 70px; /* Ajusta la posición según tu diseño */
+    width: 150px; /* Ajusta el tamaño según tu diseño */
+    height: auto; /* Mantiene la relación de aspecto */
+    z-index: 1001; /* Asegura que esté por encima de otros elementos */
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.logo.active {
+    left: 60px; /* Nueva posición cuando el sidebar está activo */
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Estilos para el header */
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+    z-index: 500;
+    transition: background-color 0.3s ease;
+    background-color: transparent;
+}
+
+header.scrolled {
+    background-color: black;
+}
+
+
+
+
+
+
+
+
+.search-bar {
+    display: flex;
+    background-color: #fff;
+    z-index: 8000;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 600px; /* Ancho máximo para la barra de búsqueda */
+    height: 20px;
+    padding: 10px; /* Espacio interior */
+    justify-content: center; /* Centra el contenido horizontalmente */
+    align-items: center;
+    position: relative;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.search-container .search-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    margin-left: 10px;
+    opacity: 0.5;
+}
+
+.search-container input {
+    flex: 1;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+}
+
+.search-bar input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    border-radius: 25px;
+}
+
+.search-bar input[type="text"]::placeholder {
+    color: #888;
+}
+
+.search-results {
+    display: block;
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px); /* Empieza más arriba */
+    width: 80%;
+    max-width: 580px;
+    background-color: rgba(0,0,0,0.9);
+    border-radius: 10px;
+    padding: 40px 20px 10px 20px;
+    color: white;
+    opacity: 0; /* Comienza transparente */
+    transition: all 0.3s ease; /* Transiciones */
+}
+
+.results-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Ajusta el número de columnas y el tamaño mínimo/máximo de los items */
+    justify-content: center; /* Centra la grid horizontalmente */
+    gap: 30px;               /* Espacio entre los elementos */
+}
+
+
+.results-container > div {
+    width: 100%;
+    justify-content: center; /* Centra la grid horizontalmente */
+    text-align: center;
+}
+
+.results-container h3 {
+    border-bottom: 1px solid white;
+    font-size: 20px;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.results-container ul {
+    list-style: none;
+    font-size: 14px;
+    padding: 0;
+}
+
+.results-container li {
+    margin-bottom: 10px;
+}
+
+#view-all-results {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: white;
+    text-decoration: underline;
+}
+
+
+
+
+
+
+.sidebar {
+    position: relative;
+    width: 60px; /* Estrecho por defecto */
+    background: #000;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    z-index: 999;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    transition: width 0.3s ease;
+}
+
+.sidebar.active {
+    width: 250px; /* Ancho al estar expandido */
+}
+
+.sidebar nav ul {
+    list-style: none; /* Eliminar los puntos de la lista */
+    padding: 0;
+    margin: 100px 0;
+    text-align: center;
+}
+
+.sidebar nav ul li {
+    margin: 20px 10px;
+}
+
+.sidebar nav ul li a {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Alinear el contenido a la izquierda */
+    color: white; /* Texto en color blanco */
+    text-decoration: none;
+    padding: 5px 5px; /* Agregar espacio alrededor del enlace */
+}
+
+.sidebar nav ul li a img {
+    width: 24px;
+    height: 24px;
+    filter: invert(1); /* Invertir el ícono a blanco */
+    margin-right: 15px; /* Espacio entre el ícono y el texto */
+    margin-left: 0; /* Espacio entre el ícono y el texto */
+    transition: margin-left 0.3s ease; /* Añadir transición para la animación */
+}
+
+.sidebar.active nav ul li a img {
+    filter: invert(1); /* Invertir el ícono a blanco */
+    margin-left: 30px; /* Espacio entre el ícono y el texto */
+    margin-right: 20px; /* Espacio entre el ícono y el texto */
+}
+
+.sidebar nav ul li a .icon-text {
+    display: inline-block; /* Mantén el display inline-block */
+    font-size: 17px;
+    opacity: 0; /* Ocultar el texto por defecto */
+    transform: translateX(-20px); /* Desplazar el texto hacia la izquierda */
+    transition: transform 0.3s ease, opacity 0.3s ease; /* Añadir transición para la animación */
+}
+
+.sidebar.active nav ul li a .icon-text {
+    opacity: 1; /* Mostrar el texto */
+    transform: translateX(0); /* Mover el texto a su posición original */
+}
+
+#toggle-button {
+    position: fixed; /* Cambiar a fixed para que se quede en la parte superior */
+    top: 20px;
+    left: 5px;
+    background: #000;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1000;
+    padding: 10px;
+    margin: 0;
+    width: 50px;
+    text-align: center;
+}
+
+
+
+
+
+main {
+    flex: 1;
+    overflow-y: auto; /* Habilitar scroll solo en main */
+    -webkit-overflow-scrolling: touch; /* Mejor desplazamiento en dispositivos móviles */
+    margin: 100px 0 90px 100px;
+    display: flex;
+    flex-direction: column;
+}
+
+main.shift {
+    margin-left: 250px;
+}
+
+footer {
+    background-color: #000; /* Color de fondo sólido (negro) */
+    color: #fff; /* Color del texto */
+    padding: 15px 20px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    min-width: 500px; /* Establece el ancho mínimo deseado */
+    height: 60px;
+    z-index: 9999;
+}
+
+
+footer .player {
+    display: flex;
+    justify-content: center; /* Centrar los controles */
+    align-items: center;
+    width: 100%; /* Asegurar que los controles ocupen todo el ancho del footer */
+}
+
+.left-section, .center-section, .right-section {
+    width: 33%;
+    display: flex;
+    align-items: center;
+}
+
+.left-section img {
+    width: 60px;
+    height: 60px;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.left-section .song-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.song-artist {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.center-section {
+    flex-grow: 1;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.controls {
+    display: flex; /* Utiliza flexbox */
+    align-items: center; /* Centra verticalmente los elementos */
+    height: 40px;
+}
+
+.control-icon {
+    width: 16px;
+    height: 16px;
+    margin: 0 12px; /* Añade margen entre los íconos */
+    cursor: pointer;
+    fill: rgba(255, 255, 255, 0.7); /* or the color you prefer */
+    /*margin: 0 10px; /* optional: add some margin between icons */
+}
+
+.control-icon:hover {
+    fill: rgba(255, 255, 255, 1); /* or the color you prefer */
+}
+
+.play-button {
+    position: relative;
+    width: 32px; /* Ancho del botón */
+    height: 32px; /* Altura del botón */
+    margin: 0 12px; /* Añade margen entre los íconos */
+    border: none;
+    background-color: white; /* Color de fondo blanco */
+    border-radius: 50%; /* Forma circular */
+    cursor: pointer;
+    outline: none;
+    transition: width 0.1s, height 0.1s, margin 0.1s; /* Transición suave */
+}
+
+.play-button:hover {
+    width: 37px; /* Ancho del botón */
+    height: 37px; /* Altura del botón */
+    margin: 0 9.5px; /* Añade margen entre los íconos */
+}
+
+.play-icon {
+    width: 16px; /* Tamaño del ícono de reproducción */
+    height: 16px; /* Tamaño del ícono de reproducción */
+    fill: rgb(0, 0, 0); /* or the color you prefer */
+}
+
+
+
+.control-icon::after {
+    fill: var(--main-color);
+    border-radius: 50%;
+    bottom: 0;
+    content: "";
+    display: block;
+    height: 4px;
+    left: 50%;
+    position: absolute;
+    -webkit-transform: translateX(-50%);
+    transform: translateX(-50%);
+    width: 4px;
+}
+
+.progress-bar {
+    display: flex;
+    align-items: center;
+    width: 80%;
+    margin-top: 10px;
+}
+
+.progress-bar:hover .progress-fill{
+    background-color: var(--main-color);
+}
+
+.progress-bar span {
+    font-size: 10px;
+}
+
+.progress {
+    width: 100%;
+    height: 5px;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.4);
+    margin: 0 5px;
+    position: relative;
+}
+
+.progress-fill {
+    height: 5px;
+    border-radius: 5px;
+    background-color: white;
+    width: 0%;
+}
+
+.right-section {
+    align-items: right;
+}
+
+.right-section svg {
+    width: 16px;
+    height: 16px;
+    fill: rgba(255, 255, 255, 0.7);
+    margin: 0 5px;
+}
+
+
+
+
+
+
+
+/* Estilos generales para las categorías */
+
+.category {
+    margin-bottom: 30px; /* Espacio entre cada categoría */
+    width: 100%;
+}
+
+.category h2 {
+    font-size: 25px;
+    margin-left: 10px;
+    margin-bottom: 30px; /* Espacio entre el título y las portadas */
+}
+
+.items {
+    height: 220px;
+    display: grid;
+    overflow-x: auto;
+    grid-auto-flow: column;
+    gap: 20px; /* Espacio entre las portadas */
+    /*padding: 0 20px;*/
+    padding-right: 40px;
+    justify-content: start;
+    justify-items: start; /* Centra los elementos en la cuadrícula horizontalmente */
+}
+
+.cover {
+    width: 150px; /* Ancho de la portada */
+    border-radius: 10px; /* Borde redondeado */
+    overflow: hidden; /* Para asegurar que la imagen respete el borde redondeado */
+    text-align: center; /* Centra el contenido */
+}
+
+.cover img {
+    width: 150px; /* Ancho de la portada */
+    height: 150px; /* Altura de la portada (ajústalo según necesites) */
+    border-radius: 10px; /* Borde redondeado */
+    object-fit: cover; /* Ajusta la imagen dentro del contenedor */
+}
+
+.title {
+    display: block;
+    align-items: center;
+    color: white;
+    font-size: 14px;
+    width: 100%;
+    height: 20px;
+    /*padding: 5px; /* Espacio interno alrededor del texto */
+}
+
+.artist {
+    display: block;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 10px;
+    width: 100%;
+    height: 20px;
+    /*padding: 5px; /* Espacio interno alrededor del texto */
+}
+
+
+
+
+
+
+
+
+.album-cover img[src="static/imgs/placeholder.gif"]::after {
+    content: "Loading..."; /* Texto de carga para imágenes sin cargar */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+}
+
+
+
+
+/* width */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: rgb(20, 20, 20);
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: #aaa;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+    background: rgb(50,50,50);
+    border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #888;
+}
+
+
+
+/* Media query para dispositivos móviles (ejemplo de breakpoint: 768px) */
+@media (max-width: 768px) {
+    #toggle-button {
+        font-size: 35px; /* Reducir el tamaño del icono en dispositivos móviles */
+        padding: 8px; /* Ajustar el padding según sea necesario */
+        width: 40px; /* Ajustar el ancho del botón */
+    }
+
+    header {
+        justify-content: right;
+    }
+
+    .search-bar {
+        max-width: 150px; /* Reducir el ancho máximo para la barra de búsqueda en móviles */
+    }
+    
+    .search-bar .search-container .search-icon {
+        width: 16px; /* Reducir el tamaño de la lupa para dispositivos móviles */
+        height: 16px; /* Reducir el tamaño de la lupa para dispositivos móviles */
+        margin-right: 8px; /* Ajustar el espacio a la derecha de la lupa */
+    }
+    
+    .search-bar .search-container input {
+        padding: 8px 16px; /* Ajustar el padding del input para dispositivos móviles */
+        font-size: 14px; /* Reducir el tamaño de la fuente para dispositivos móviles */
+    }
+}
+
+@keyframes loading {
+    0% {
+        background-position: 100% 0;
+    }
+    100% {
+        background-position: -100% 0;
+    }
+}
