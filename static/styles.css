@@ -197,6 +197,14 @@ header.scrolled {
     align-items: center;
     margin-bottom: 10px;
     text-decoration: none;
+    border-radius: 5px;
+    background-color: transparent;
+    transition: all 0.1s ease;
+}
+
+.songs-results li:hover,
+.artists-results li:hover {
+    background-color: rgba(255, 255, 255, 0.2)
 }
 
 .songs-results li:hover,
@@ -512,6 +520,7 @@ footer .player {
     align-items: center;
     width: 100px;
     height: 20px;
+    padding-right: 20px;
 }
 
 .volume {

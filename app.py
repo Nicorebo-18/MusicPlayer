@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 from dotenv import load_dotenv
 from requests import post, get
+import sqlite3
 import os
 import base64
 import json
@@ -11,8 +12,61 @@ app = Flask(__name__)
 client_id = os.getenv('CLIENT_ID')
 client_secret = os.getenv('CLIENT_SECRET')
 
+### DATABASE FUNCTIONS ###
+
+def create_database(db_path='database/songs.db'):
+    
+    # Conectar a la base de datos (o crearla si no existe)
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # Crear la tabla con las nuevas columnas
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS songs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            artist TEXT NOT NULL,
+            album TEXT,
+            genre TEXT,
+            release_date TEXT,
+            file_path TEXT NOT NULL,
+            image_url TEXT,
+            preview_url TEXT
+        )
+    ''')
+
+    # Confirmar los cambios y cerrar la conexión
+    conn.commit()
+    conn.close()
+    print("Base de datos y tabla creadas con éxito en", db_path)
+
+def insert_song(title, artist, album, genre, release_date, file_path, image_url, preview_url, db_path='database/songs.db'):
+    # Conectar a la base de datos
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # Insertar los datos
+    cursor.execute('''
+        INSERT INTO songs (title, artist, album, genre, release_date, file_path, image_url, preview_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (title, artist, album, genre, release_date, file_path, image_url, preview_url))
+
+    # Confirmar los cambios y cerrar la conexión
+    conn.commit()
+    conn.close()
+    print("Canción insertada con éxito.")
+
+def check_and_create_database(db_path='database/songs.db'):
+    
+    # Verificar si el archivo de la base de datos existe
+    if not os.path.exists(db_path):
+        print("La base de datos no existe. Creando...")
+        create_database(db_path)
+    else:
+        print("La base de datos ya existe.")
 
 
+### OTHER FUNCTIONS ###
 
 def get_token():
     auth_string = client_id + ':' + client_secret
@@ -123,4 +177,5 @@ def search():
 
 
 if __name__ == '__main__':
+    check_and_create_database()  # Verificar y crear la base de datos si es necesario
     app.run(port=3210, debug=False)

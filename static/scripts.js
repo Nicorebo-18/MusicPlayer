@@ -56,6 +56,7 @@ function updateProgressBar() {
 }
 
 progressBar.addEventListener('click', (e) => {
+    if (!audio) return;
     const rect = progress.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const progressPercentage = (offsetX / rect.width) * 100;
@@ -66,6 +67,7 @@ progressBar.addEventListener('click', (e) => {
 });
 
 progressBar.addEventListener('mousedown', () => {
+    if (!audio) return;
     const onMouseMove = (e) => {
         const rect = progress.getBoundingClientRect();
         const offsetX = e.clientX - rect.left;
