@@ -98,7 +98,7 @@ progressBar.addEventListener('mousedown', () => {
 // Funciones de Reproducción de Audio
 // ==========================================================
 
-function playSong(song, title, artist, imageUrl, volume = 1) {
+function playSong(song, title, artist, imageUrl, otherdata = null) {
     // Si ya hay una canción reproduciéndose, deténla y elimina la instancia
     if (audio) {
         audio.pause();
@@ -108,7 +108,7 @@ function playSong(song, title, artist, imageUrl, volume = 1) {
 
     // Crear una nueva instancia de audio y reproducirla
     audio = new Audio(song);
-    audio.volume = volume; // Establecer el volumen global
+    //audio.volume = volume; // Establecer el volumen global
     isPlaying = true;
     audio.play();
     updatePlayButton();
@@ -133,6 +133,8 @@ function playSong(song, title, artist, imageUrl, volume = 1) {
         artist: artist,
         image_url: imageUrl
     });
+
+    updateMediaSession({otherdata});
 }
 
 function playAudio() {
@@ -223,6 +225,52 @@ function updateFooter(song) {
     songTitle.textContent = song.title || 'Escoge una canción';
     songArtist.textContent = song.artist || ';P';
 }
+
+function updateMediaSession(songmeta) {
+    if ('mediaSession' in navigator) {
+
+        const song = songmeta.otherdata || {};
+        const defaultImage = 'static/imgs/icontr.png'; // Imagen de reserva
+        const imgArtwork = song.image_url ? [
+            { src: song.image_url, sizes: '96x96', type: 'image/png' },
+            { src: song.image_url, sizes: '128x128', type: 'image/png' },
+            { src: song.image_url, sizes: '192x192', type: 'image/png' },
+            { src: song.image_url, sizes: '256x256', type: 'image/png' },
+            { src: song.image_url, sizes: '384x384', type: 'image/png' },
+            { src: song.image_url, sizes: '512x512', type: 'image/png' }
+        ] : [
+            { src: defaultImage, sizes: '96x96', type: 'image/png' },
+            { src: defaultImage, sizes: '128x128', type: 'image/png' },
+            { src: defaultImage, sizes: '192x192', type: 'image/png' },
+            { src: defaultImage, sizes: '256x256', type: 'image/png' },
+            { src: defaultImage, sizes: '384x384', type: 'image/png' },
+            { src: defaultImage, sizes: '512x512', type: 'image/png' }
+        ];
+
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: song.title || 'Canción Desconocida',
+            artist: song.artist || 'Reproduciendo en Music® by Nicorebo18',
+            album: song.album || 'Unknown Album',
+            artwork: imgArtwork 
+        });
+
+        navigator.mediaSession.setActionHandler('play', () => playAudio());
+        navigator.mediaSession.setActionHandler('pause', () => pauseAudio());
+        //navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+        //    // Implement seek back functionality
+        //});
+        //navigator.mediaSession.setActionHandler('seekforward', (details) => {
+        //    // Implement seek forward functionality
+        //});
+        navigator.mediaSession.setActionHandler('previoustrack', () => {
+            // Implement previous track functionality
+        });
+        navigator.mediaSession.setActionHandler('nexttrack', () => {
+            // Implement next track functionality
+        });
+    }
+}
+
 
 
 
@@ -328,7 +376,7 @@ function handleSongClick(event) {
                             console.log('Error al obtener la información de la canción: ' + songInfo.error);
                         } else {
                             // Reproducir la canción
-                            playSong(songInfo.file_url, songInfo.file_path, songInfo.title, songInfo.artist, songInfo.image_url);
+                            playSong(songInfo.file_url, songInfo.title, songInfo.artist, songInfo.image_url, songInfo);
                         }
                     })
                     .catch(error => {
@@ -366,7 +414,7 @@ function handleSongClick(event) {
                         const songData = data.song;
 
                         // Reproducir la canción
-                        playSong(songData.file_path, songData.file_path, songData.title, songData.artist, songData.image_url);
+                        playSong(songData.file_path, songData.title, songData.artist, songData.image_url, songData);
                     } else {
                         console.log('Unexpected response format');
                     }
