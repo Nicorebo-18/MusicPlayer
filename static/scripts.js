@@ -8,9 +8,13 @@ const sidebar = document.getElementById('sidebar');
 const logo = document.getElementById('logo');
 const mainContent = document.querySelector('main');
 const progressBar = document.querySelector('.progress-bar');
+const progress = document.querySelector('.progress');
 const progressFill = document.querySelector('.progress-fill');
 const currentTimeElement = document.getElementById('current-time');
 const totalTimeElement = document.getElementById('total-time');
+const volumeBar = document.querySelector('.volume-bar');
+const volume = document.querySelector('.volume');
+const volumeFill = document.querySelector('.volume-fill');
 let isPlaying = false;
 let audio = null;
 let debounceTimer;
@@ -44,7 +48,7 @@ function updateProgressBar() {
 
     const duration = audio.duration || 0; // Duración total de la canción
     const currentTime = audio.currentTime || 0; // Tiempo actual de reproducción
-    const progressPercentage = (currentTime / duration) * 96 + 2 || 2; // Calcula el porcentaje de progreso
+    const progressPercentage = (currentTime / duration) * 100 || 2; // Calcula el porcentaje de progreso
     progressFill.style.width = `${progressPercentage}%`; // Actualiza la anchura de la barra de progreso
 
     currentTimeElement.textContent = formatTime(currentTime);
@@ -52,7 +56,7 @@ function updateProgressBar() {
 }
 
 progressBar.addEventListener('click', (e) => {
-    const rect = progressBar.getBoundingClientRect();
+    const rect = progress.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const progressPercentage = (offsetX / rect.width) * 100;
     const newTime = (progressPercentage / 100) * audio.duration;
@@ -63,7 +67,7 @@ progressBar.addEventListener('click', (e) => {
 
 progressBar.addEventListener('mousedown', () => {
     const onMouseMove = (e) => {
-        const rect = progressBar.getBoundingClientRect();
+        const rect = progress.getBoundingClientRect();
         const offsetX = e.clientX - rect.left;
         pauseAudio();
         isPlaying = false;
@@ -71,6 +75,7 @@ progressBar.addEventListener('mousedown', () => {
             const progressPercentage = (offsetX / rect.width) * 100;
             const newTime = (progressPercentage / 100) * audio.duration;
             progressFill.style.width = `${progressPercentage}%`;
+            progressFill.style.background = "var(--main-color)";
             audio.currentTime = newTime;
             updateProgressBar();
         }
@@ -79,6 +84,7 @@ progressBar.addEventListener('mousedown', () => {
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', () => {
         playAudio();
+        progressFill.style.background = "";
         document.removeEventListener('mousemove', onMouseMove);
     }, { once: true });
 });
@@ -153,6 +159,35 @@ function updatePlayButton() {
     playButton.innerHTML = isPlaying ? pauseSVG : playSVG;
 }
 
+function updateVolumeBar(percentage) {
+    const volPercentage = percentage * 100 || 0; // Calcula el porcentaje de progreso
+    volumeFill.style.width = `${volPercentage}%`; // Actualiza la anchura de la barra de progreso
+}
+
+volumeBar.addEventListener('click', (e) => {
+    const rect = volumeBar.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const volumePercentage = offsetX / rect.width;
+    updateVolumeBar(volumePercentage);
+});
+
+volumeBar.addEventListener('mousedown', () => {
+    const onMouseMove = (e) => {
+        const rect = volumeBar.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        if (offsetX >= 0 && offsetX <= rect.width) {
+            const volumePercentage = offsetX / rect.width;
+            updateVolumeBar(volumePercentage);
+        }
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', () => {
+        document.removeEventListener('mousemove', onMouseMove);
+    }, { once: true });
+});
+
+
 
 
 // ==========================================================
@@ -210,7 +245,7 @@ function showSearchResults() {
     }
 }
 
-const debouncedShowSearchResults = debounce(showSearchResults, 200);
+const debouncedShowSearchResults = debounce(showSearchResults, 250);
 
 document.getElementById('search-input').addEventListener('input', debouncedShowSearchResults);  // Asocia la función debounced al evento oninput
 
@@ -238,10 +273,15 @@ document.getElementById('search-input').addEventListener('blur', hideSearchResul
 document.addEventListener('click', function(event) {
     const sidebar = document.getElementById('sidebar');
     const toggleButton = document.getElementById('toggle-button');
+    const logo = document.querySelector('.logo');
 
     // Verificar si el clic fue fuera del sidebar y del botón de toggle
     if (!sidebar.contains(event.target) && event.target !== toggleButton) {
         sidebar.classList.remove('active'); // Remover la clase 'active' del sidebar
+        logo.classList.remove('active'); // Remover la clase 'active' del logo
+    } else if (event.target === toggleButton) {
+        sidebar.classList.toggle('active'); // Alternar la clase 'active' del sidebar al hacer clic en el botón de toggle
+        logo.classList.toggle('active'); // Alternar la clase 'active' del logo al hacer clic en el botón de toggle
     }
 });
 

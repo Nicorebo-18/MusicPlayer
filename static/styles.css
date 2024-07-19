@@ -341,8 +341,9 @@ footer {
     left: 0;
     width: 100%;
     min-width: 500px; /* Establece el ancho mínimo deseado */
-    height: 60px;
+    height: 90px;
     z-index: 9999;
+    box-sizing: border-box; /* Asegura que el padding se incluya en el ancho total */
 }
 
 
@@ -466,7 +467,7 @@ footer .player {
     display: flex;
     align-items: center;
     width: 80%;
-    margin-top: 10px;
+    height: 20px;
 }
 
 .progress-bar:hover .progress-fill{
@@ -494,7 +495,9 @@ footer .player {
 }
 
 .right-section {
-    align-items: right;
+    display: flex;
+    justify-content: flex-end; /* Alinea los elementos a la derecha */
+    align-items: center; /* Alinea los elementos verticalmente al centro */
 }
 
 .right-section svg {
@@ -502,6 +505,33 @@ footer .player {
     height: 16px;
     fill: rgba(255, 255, 255, 0.7);
     margin: 0 5px;
+}
+
+.volume-bar {
+    display: flex;
+    align-items: center;
+    width: 100px;
+    height: 20px;
+}
+
+.volume {
+    width: 100%;
+    height: 5px;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.4);
+    margin: 0 5px;
+    position: relative;
+}
+
+.volume-fill {
+    width: 50%; /* Initial volume level */
+    height: 100%;
+    background-color: #fff;
+    border-radius: 4px;
+}
+
+.volume-bar:hover .volume-fill{
+    background-color: var(--main-color);
 }
 
 
