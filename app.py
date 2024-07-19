@@ -1,10 +1,11 @@
 from flask import Flask, render_template, jsonify, request
 from dotenv import load_dotenv
 from requests import post, get
-import sqlite3
-import os
 import base64
 import json
+import os
+import sqlite3
+import yt_dlp
 
 load_dotenv()
 app = Flask(__name__)
@@ -98,16 +99,60 @@ def search_for_artist(token, artist_name):
     json_result = json.loads(result.content)
     print(json_result)
 
-auth_token = get_token()
-#search_for_artist(auth_token, "Twen")
+def search_and_download_song(title, artist, album, genre, release_date, image_url, preview_url, output_dir):
+    search_query = f"{title} {artist} lyric"
+    
+    # Crear la ruta del directorio basado en Artista/Álbum
+    artist_dir = os.path.join(output_dir, artist)
+    album_dir = os.path.join(artist_dir, album)
+    
+    # Crear directorios si no existen
+    os.makedirs(album_dir, exist_ok=True)
+    
+    # Establecer la ruta completa del archivo
+    output_path = os.path.join(album_dir, f"{title}.mp3")
+    
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': output_path,
+        'noplaylist': True,
+        'quiet': True,
+        'default_search': 'ytsearch1:',  # Limit to 1 search result
+    }
 
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        try:
+            # Perform search and download
+            info_dict = ydl.extract_info(search_query, download=True)
+            downloaded_title = info_dict['title']
+            
+            # Insertar en la base de datos
+            insert_song(
+                title=title,
+                artist=artist,
+                album=album,
+                genre=genre,
+                release_date=release_date,
+                file_path=output_path,
+                image_url=image_url,
+                preview_url=preview_url
+            )
+            
+            return downloaded_title
+        except Exception as e:
+            print(f"Error: {e}")
+            return None
+        
+
+
+### FLASK FUNCTIONS ###
 
 @app.route('/')
 def index():
     # Datos simulados para las categorías de álbumes
     categorias = {
         "Escuchado Recientemente": [
-            {"title": "Clancy", "artist": "Twenty One Pilots", "audio_file": "/static/song1.mp3", "cover_url": "https://www.emp-online.es/dw/image/v2/BBQV_PRD/on/demandware.static/-/Sites-master-emp/default/dw7f84522c/images/5/6/9/1/569187.jpg?sfrm=png"},
+            {"title": "Clancy", "artist": "Twenty One Pilots", "audio_file": "static/songs/Twenty One Pilots/Clancy/Vignette.mp3", "cover_url": "https://www.emp-online.es/dw/image/v2/BBQV_PRD/on/demandware.static/-/Sites-master-emp/default/dw7f84522c/images/5/6/9/1/569187.jpg?sfrm=png"},
             {"title": "Álbum 2", "cover_url": ""},
             {"title": "Álbum 1", "cover_url": ""},
             {"title": "Álbum 2", "cover_url": ""},
@@ -175,7 +220,94 @@ def search():
     
     return jsonify(results)
 
+@app.route('/check_song', methods=['GET'])
+def check_song():
+    title = request.args.get('title')
+    artist = request.args.get('artist')
+    album = request.args.get('album')
+
+    if not title or not artist or not album:
+        return jsonify({"error": "Missing title, artist, or album"}), 400
+
+    # Conectar a la base de datos
+    conn = sqlite3.connect('database/songs.db')
+    cursor = conn.cursor()
+
+    # Verificar si la canción ya está en la base de datos
+    cursor.execute('''
+        SELECT * FROM songs
+        WHERE title = ? AND artist = ? AND album = ?
+    ''', (title, artist, album))
+    song = cursor.fetchone()
+
+    conn.close()
+
+    if song:
+        return jsonify({"exists": True, "song": song}), 200
+    else:
+        return jsonify({"exists": False}), 200
+
+@app.route('/download', methods=['POST'])
+def download_song():
+    data = request.json
+    title = data.get('title')
+    artist = data.get('artist')
+    album = data.get('album')
+    genre = data.get('genre', '')  # Valor predeterminado vacío si no se proporciona
+    release_date = data.get('release_date', '')  # Valor predeterminado vacío si no se proporciona
+    image_url = data.get('image_url', '')  # Valor predeterminado vacío si no se proporciona
+    preview_url = data.get('preview_url', '')  # Valor predeterminado vacío si no se proporciona
+    
+    # Verificar si faltan datos necesarios
+    if not title or not artist or not album:
+        print("[ERROR] Missing title, artist, or album")
+        return jsonify({"error": "Missing title, artist, or album"}), 400
+
+    output_dir = 'static/songs'
+    song_title = search_and_download_song(
+        title, artist, album, genre, release_date, image_url, preview_url, output_dir
+    )
+    
+    if song_title:
+        print(f"[INFO] Downloaded: {song_title}")
+        return jsonify({"message": f"Downloaded: {song_title}"}), 200
+    else:
+        print("[ERROR] Failed to download song")
+        return jsonify({"error": "Failed to download song"}), 500
+    
+@app.route('/get_song_info', methods=['GET'])
+def get_song_info():
+    title = request.args.get('title')
+    artist = request.args.get('artist')
+    album = request.args.get('album')
+
+    conn = sqlite3.connect('database/songs.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT title, artist, album, file_path, image_url
+        FROM songs
+        WHERE title = ? AND artist = ? AND album = ?
+    ''', (title, artist, album))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        song_info = {
+            'title': row[0],
+            'artist': row[1],
+            'album': row[2],
+            'file_url': row[3],
+            'image_url': row[4]
+        }
+        return jsonify(song_info)
+    else:
+        return jsonify({'error': 'Song not found'}), 404
+
+
+
+
 
 if __name__ == '__main__':
+    auth_token = get_token()
     check_and_create_database()  # Verificar y crear la base de datos si es necesario
     app.run(port=3210, debug=False)

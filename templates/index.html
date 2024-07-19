@@ -13,7 +13,7 @@
         <img src="{{ url_for('static', filename='imgs/logo.png') }}" alt="YT Music Clone Logo" class="logo" id="logo">
 
         <header>
-            <div class="search-bar" onclick="activateSearch()">
+            <div class="search-bar">
                 <div class="search-container">
                     <img src="{{ url_for('static', filename='imgs/search-icon.png') }}" alt="Search Icon" class="search-icon">
                     <input type="text" placeholder="Busca una canción..." id="search-input">
@@ -91,10 +91,10 @@
             <div class="player">
 
                 <div class="left-section">
-                    <img src="static/imgs/song-placeholder.png" alt="Album Cover">
+                    <img id="footer-album-cover" src="static/imgs/song-placeholder.png" alt="Album Cover">
                     <div class="song-info">
-                        <span class="song-title">Escoge una canción</span>
-                        <span class="song-artist">;P</span>
+                        <span id="footer-song-title" class="song-title">Escoge una canción</span>
+                        <span id="footer-song-artist" class="song-artist">;P</span>
                     </div>
                 </div>
 

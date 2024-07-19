@@ -15,8 +15,9 @@ const totalTimeElement = document.getElementById('total-time');
 const volumeBar = document.querySelector('.volume-bar');
 const volume = document.querySelector('.volume');
 const volumeFill = document.querySelector('.volume-fill');
-let isPlaying = false;
-let audio = null;
+let audio = null; // Variable global para la instancia de audio
+let isPlaying = false; // Estado de reproducción
+let currentVolume = 1; // Variable global para el volumen, rango de 0.0 a 1.0
 let debounceTimer;
 
 
@@ -97,7 +98,7 @@ progressBar.addEventListener('mousedown', () => {
 // Funciones de Reproducción de Audio
 // ==========================================================
 
-function playSong(song) {
+function playSong(song, title, artist, imageUrl, volume = 1) {
     // Si ya hay una canción reproduciéndose, deténla y elimina la instancia
     if (audio) {
         audio.pause();
@@ -106,7 +107,8 @@ function playSong(song) {
     }
 
     // Crear una nueva instancia de audio y reproducirla
-    audio = new Audio(`${song}`);
+    audio = new Audio(song);
+    audio.volume = volume; // Establecer el volumen global
     isPlaying = true;
     audio.play();
     updatePlayButton();
@@ -124,27 +126,37 @@ function playSong(song) {
         isPlaying = false;
         updatePlayButton();
     });
+
+    // Actualizar el footer con la información de la canción actual
+    updateFooter({
+        title: title,
+        artist: artist,
+        image_url: imageUrl
+    });
 }
 
 function playAudio() {
-    isPlaying = true;
-    audio.play();
-    updatePlayButton();
+    if (audio) {
+        isPlaying = true;
+        audio.play();
+        updatePlayButton();
+    }
 }
 
 function pauseAudio() {
-    isPlaying = false;
-    audio.pause();
-    updatePlayButton();
+    if (audio) {
+        isPlaying = false;
+        audio.pause();
+        updatePlayButton();
+    }
 }
 
 function togglePlay() {
     if (isPlaying) {
-        audio.pause();
+        pauseAudio();
     } else {
-        audio.play();
+        playAudio();
     }
-    isPlaying = !isPlaying;
     updatePlayButton();
 }
 
@@ -162,8 +174,9 @@ function updatePlayButton() {
 }
 
 function updateVolumeBar(percentage) {
-    const volPercentage = percentage * 100 || 0; // Calcula el porcentaje de progreso
+    const volPercentage = Math.max(0, Math.min(percentage * 100, 100)); // Asegura que el porcentaje esté entre 0 y 100
     volumeFill.style.width = `${volPercentage}%`; // Actualiza la anchura de la barra de progreso
+    setVolume(percentage); // Establece el volumen de la canción
 }
 
 volumeBar.addEventListener('click', (e) => {
@@ -188,6 +201,29 @@ volumeBar.addEventListener('mousedown', () => {
         document.removeEventListener('mousemove', onMouseMove);
     }, { once: true });
 });
+
+function setVolume(volume) {
+    currentVolume = Math.max(0, Math.min(volume, 1)); // Asegura que el volumen esté entre 0 y 1
+    if (audio) {
+        audio.volume = currentVolume; // Establece el volumen de la instancia de audio
+    }
+}
+
+function updateFooter(song) {
+    const albumCover = document.getElementById('footer-album-cover');
+    const songTitle = document.getElementById('footer-song-title');
+    const songArtist = document.getElementById('footer-song-artist');
+
+    if (song.image_url) {
+        albumCover.src = song.image_url;
+    } else {
+        albumCover.src = 'static/imgs/song-placeholder.png'; // Imagen de reserva
+    }
+
+    songTitle.textContent = song.title || 'Escoge una canción';
+    songArtist.textContent = song.artist || ';P';
+}
+
 
 
 
@@ -228,6 +264,12 @@ function showSearchResults() {
 
                 data.tracks.forEach(track => {
                     const li = document.createElement('li');
+                    li.dataset.artist = track.artist || '';
+                    li.dataset.album = track.album || '';
+                    li.dataset.genre = track.genre || ''; // Agregar género si está disponible
+                    li.dataset.releaseDate = track.release_date || ''; // Agregar fecha de lanzamiento si está disponible
+                    li.dataset.previewUrl = track.preview_url || ''; // Agregar URL de vista previa si está disponible
+
                     const img = document.createElement('img');
                     img.src = track.image_url ? track.image_url : 'static/imgs/song-placeholder.png'; // Similarmente, una imagen de reserva para las canciones
                     img.alt = track.name;
@@ -263,11 +305,109 @@ function hideSearchResults() {
     searchResults.style.transform = "translateX(-50%) translateY(-20px);";
 }
 
+function handleSongClick(event) {
+    const li = event.target.closest('li');
+    if (!li) return;
+
+    const songName = li.querySelector('span').textContent;
+    const songImageUrl = li.querySelector('img').src;
+    const artist = li.dataset.artist || '';
+    const album = li.dataset.album || '';
+
+    // Verificar si la canción ya está en la base de datos
+    fetch(`/check_song?title=${encodeURIComponent(songName)}&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.exists) {
+                console.log('La canción ya está en la base de datos.');
+                // Obtener la información de la canción
+                fetch(`/get_song_info?title=${encodeURIComponent(songName)}&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}`)
+                    .then(response => response.json())
+                    .then(songInfo => {
+                        if (songInfo.error) {
+                            console.log('Error al obtener la información de la canción: ' + songInfo.error);
+                        } else {
+                            // Actualizar el footer con la canción existente
+                            updateFooter({
+                                title: songInfo.title,
+                                artist: songInfo.artist,
+                                image_url: songInfo.image_url
+                            });
+                            // Reproducir la canción
+                            playSong(songInfo.file_url);
+                        }
+                    })
+                    .catch(error => {
+                        console.log('Error al obtener la información de la canción: ' + error.message);
+                    });
+            } else {
+                // Descargar la canción si no está en la base de datos
+                const requestData = {
+                    title: songName,
+                    artist: artist,
+                    album: album,
+                    genre: li.dataset.genre || '',
+                    release_date: li.dataset.releaseDate || '',
+                    image_url: songImageUrl,
+                    preview_url: li.dataset.previewUrl || ''
+                };
+
+                fetch('/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.error || 'Unknown error occurred');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.message) {
+                        console.log(data.message); // Mostrar mensaje de éxito
+                        // Actualizar el footer con la nueva canción
+                        updateFooter({
+                            title: songName,
+                            artist: artist,
+                            image_url: songImageUrl
+                        });
+                        // Reproducir la canción
+                        playSong(data.file_url);
+                    } else {
+                        console.log('Unexpected response format');
+                    }
+                })
+                .catch(error => {
+                    console.log('Failed to download song: ' + error.message);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            console.log('Error checking song existence: ' + error.message);
+        });
+}
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('songs-list').addEventListener('click', handleSongClick);
+});
+
+
 
 
 // ==========================================================
 // Event Listeners
 // ==========================================================
+
+// Agregar event listener a los elementos de la lista de canciones
+document.getElementById('songs-list').addEventListener('click', handleSongClick);
 
 document.getElementById('search-input').addEventListener('focus', showSearchResults);  // Mostrar resultados al enfocar
 document.getElementById('search-input').addEventListener('blur', hideSearchResults);  // Ocultar resultados al perder el foco
