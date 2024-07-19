@@ -10,12 +10,20 @@ const currentTimeElement = document.getElementById('current-time');
 const totalTimeElement = document.getElementById('total-time');
 let isPlaying = false;
 let audio = null;
+let debounceTimer;
 
 
 function formatTime(seconds) {
     const minutes = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+function debounce(func, delay) {
+    return function(...args) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => func.apply(this, args), delay);
+    };
 }
 
 
@@ -32,57 +40,80 @@ function activateSearch() {
 
 
 
+// Simplificada función debounce
+function debounce(func, delay) {
+    let timeout;
+    return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
+// La función que se ejecutará al buscar
 function showSearchResults() {
     const searchInput = document.getElementById('search-input').value;
     const searchResults = document.getElementById('search-results');
 
     if (searchInput.length > 0) {
-        // Simular resultados de búsqueda
-        const artists = ["Artista 1", "Artista 2", "Artista 3", "Artista 4", "Artista 5"];
-        const songs = ["Album 1", "Album 2", "Album 3", "Album 4", "Album 5"];
-        const albums = ["Canción 1", "Canción 2", "Canción 3", "Canción 4", "Canción 5"];
+        fetch(`/search?q=${searchInput}`)
+            .then(response => response.json())
+            .then(data => {
+                const artistsList = document.getElementById('artists-list');
+                const songsList = document.getElementById('songs-list');
 
-        const artistsList = document.getElementById('artists-list');
-        const albumsList = document.getElementById('albums-list');
-        const songsList = document.getElementById('songs-list');
+                // Limpiar listas anteriores
+                artistsList.innerHTML = '';
+                songsList.innerHTML = '';
 
-        // Limpiar listas anteriores
-        artistsList.innerHTML = '';
-        albumsList.innerHTML = '';
-        songsList.innerHTML = '';
+                // Añadir nuevos resultados
+                data.artists.forEach(artist => {
+                    const li = document.createElement('li');
+                    const img = document.createElement('img');
+                    img.src = artist.image_url ? artist.image_url : 'static/imgs/user-placeholder.png'; // Asegúrate de tener una imagen de reserva en caso de que no haya imagen del artista
+                    img.alt = artist.name;
+                    li.appendChild(img);
+                    const span = document.createElement('span');
+                    span.textContent = artist.name;
+                    li.appendChild(span);
+                    artistsList.appendChild(li);
+                });
 
-        // Añadir nuevos resultados
-        artists.forEach(artist => {
-            const li = document.createElement('li');
-            li.textContent = artist;
-            artistsList.appendChild(li);
-        });
+                data.tracks.forEach(track => {
+                    const li = document.createElement('li');
+                    const img = document.createElement('img');
+                    img.src = track.image_url ? track.image_url : 'static/imgs/song-placeholder.png'; // Similarmente, una imagen de reserva para las canciones
+                    img.alt = track.name;
+                    li.appendChild(img);
+                    const span = document.createElement('span');
+                    span.textContent = track.name;
+                    li.appendChild(span);
+                    songsList.appendChild(li);
+                });
 
-        albums.forEach(album => {
-            const li = document.createElement('li');
-            li.textContent = album;
-            albumsList.appendChild(li);
-        });
-
-        songs.forEach(song => {
-            const li = document.createElement('li');
-            li.textContent = song;
-            songsList.appendChild(li);
-        });
-
-        searchResults.style.opacity = "1";
-        searchResults.style.transform = "translateX(-50%) translateY(0);";
+                searchResults.style.opacity = "1";
+                searchResults.style.transform = "translateX(-50%) translateY(0);";
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
     } else {
         searchResults.style.opacity = "0";
         searchResults.style.transform = "translateX(-50%) translateY(-20px);";
     }
 }
 
-function hideSearchResults() {  // Agrega esta función para ocultar los resultados al perder el foco
+const debouncedShowSearchResults = debounce(showSearchResults, 500);
+
+document.getElementById('search-input').addEventListener('input', debouncedShowSearchResults);  // Asocia la función debounced al evento oninput
+
+
+function hideSearchResults() {
     const searchResults = document.getElementById('search-results');
     searchResults.style.opacity = "0";
     searchResults.style.transform = "translateX(-50%) translateY(-20px);";
 }
+
+
 
 
 function playSong(song) {
@@ -186,6 +217,11 @@ progressBar.addEventListener('mousedown', () => {
 
 // Función para actualizar la barra de progreso
 function updateProgressBar() {
+
+    if (!audio) {
+        return;
+    }
+
     const duration = audio.duration || 0; // Duración total de la canción
     const currentTime = audio.currentTime || 0; // Tiempo actual de reproducción
     const progressPercentage = (currentTime / duration) * 96 + 2 || 2; // Calcula el porcentaje de progreso
@@ -195,8 +231,9 @@ function updateProgressBar() {
     totalTimeElement.textContent = formatTime(duration);
 }
 
-
-
+audio.addEventListener('loadedmetadata', () => {
+    updateProgressBar();
+});
 
 // Configura el intervalo para llamar a updateProgressBar cada segundo
 setInterval(updateProgressBar, 1000);
@@ -204,6 +241,8 @@ setInterval(updateProgressBar, 1000);
 // También puedes actualizar la barra de progreso durante el evento 'timeupdate'
 audio.addEventListener('timeupdate', updateProgressBar);
 
+
+// Envuelve showSearchResults en debounce
 document.getElementById('search-input').addEventListener('focus', showSearchResults);  // Cambia 'input' a 'focus'
 document.getElementById('search-input').addEventListener('blur', hideSearchResults);  // Agrega esta línea para ocultar los resultados al perder el foco
 

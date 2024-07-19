@@ -165,47 +165,64 @@ header.scrolled {
     max-width: 580px;
     background-color: rgba(0,0,0,0.9);
     border-radius: 10px;
-    padding: 40px 20px 10px 20px;
+    padding: 20px; /* Padding dentro del contenedor */
+    padding-top: 60px;
     color: white;
     opacity: 0; /* Comienza transparente */
     transition: all 0.3s ease; /* Transiciones */
+    box-sizing: border-box; /* Incluye padding y border en el tamaño total del contenedor */
 }
 
 .results-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Ajusta el número de columnas y el tamaño mínimo/máximo de los items */
-    justify-content: center; /* Centra la grid horizontalmente */
-    gap: 30px;               /* Espacio entre los elementos */
+    display: flex;
+    gap: 20px; /* Espacio entre canciones y artistas */
 }
 
-
-.results-container > div {
-    width: 100%;
-    justify-content: center; /* Centra la grid horizontalmente */
-    text-align: center;
+.songs-results,
+.artists-results {
+    flex: 1; /* Toma el espacio disponible */
+    width: 50%;
 }
 
-.results-container h3 {
-    border-bottom: 1px solid white;
-    font-size: 20px;
-    padding-bottom: 5px;
-    margin-bottom: 10px;
-}
-
-.results-container ul {
+.songs-results ul,
+.artists-results ul {
     list-style: none;
-    font-size: 14px;
     padding: 0;
+    margin: 0;
 }
 
-.results-container li {
+.songs-results li,
+.artists-results li {
+    display: flex;
+    align-items: center;
     margin-bottom: 10px;
+    text-decoration: none;
+}
+
+.songs-results li:hover,
+.artists-results li:hover {
+    text-decoration: underline;
+}
+
+.songs-results img,
+.artists-results img {
+    width: 50px; /* Tamaño de las miniaturas */
+    height: 50px;
+    margin-right: 10px;
+}
+
+.artists-results img {
+    border-radius: 50%; /* Miniaturas circulares para artistas */
+}
+
+.songs-results img {
+    border-radius: 5px; /* Miniaturas cuadradas para canciones */
 }
 
 #view-all-results {
     display: block;
+    margin-top: 10px;
     text-align: center;
-    margin-top: 20px;
     color: white;
     text-decoration: underline;
 }
@@ -384,6 +401,19 @@ footer .player {
     fill: rgba(255, 255, 255, 1); /* or the color you prefer */
 }
 
+#icon.clicked::after {
+    background-color: var(--main-color);
+    border-radius: 50%;
+    bottom: 0;
+    content: "";
+    display: block;
+    height: 4px;
+    left: 50%;
+    position: absolute;
+    transform: translateX(-50%);
+    width: 4px;
+}
+
 .play-button {
     position: relative;
     width: 32px; /* Ancho del botón */
@@ -407,6 +437,13 @@ footer .player {
     width: 16px; /* Tamaño del ícono de reproducción */
     height: 16px; /* Tamaño del ícono de reproducción */
     fill: rgb(0, 0, 0); /* or the color you prefer */
+}
+
+#current-time,
+#total-time {
+    display: inline-block; /* Esto permite definir un ancho fijo */
+    width: 30px; /* Ajusta el valor según sea necesario */
+    text-align: center; /* Centra el texto dentro del span */
 }
 
 

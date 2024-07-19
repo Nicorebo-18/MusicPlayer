@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify, request
 from dotenv import load_dotenv
 from requests import post, get
 import os
@@ -81,6 +81,45 @@ def index():
 
     return render_template('index.html', categorias=categorias)
 
+
+
+@app.route('/search', methods=['GET'])
+def search():
+    token = get_token()
+    headers = get_auth_header(token)
+    query = request.args.get('q')
+    url = f"https://api.spotify.com/v1/search?q={query}&type=track,artist&limit=5"
+    
+    response = get(url, headers=headers)
+    data = response.json()
+    
+    results = {
+        'tracks': [],
+        'artists': []
+    }
+    
+    # Procesar canciones
+    for item in data['tracks']['items']:
+        album_images = item['album']['images']
+        image_url = album_images[1]['url'] if len(album_images) > 1 else ''  # URL de imagen de tamaño mediano
+        
+        results['tracks'].append({
+            'name': item['name'],
+            'artist': item['artists'][0]['name'],
+            'album': item['album']['name'],
+            'preview_url': item['preview_url'],
+            'image_url': image_url
+        })
+    
+    for item in data['artists']['items']:
+        results['artists'].append({
+            'name': item['name'],
+            'genres': item['genres'],
+            'followers': item['followers']['total'],
+            'image_url': item['images'][0]['url'] if item['images'] else None
+        })
+    
+    return jsonify(results)
 
 
 if __name__ == '__main__':

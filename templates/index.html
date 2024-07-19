@@ -16,7 +16,7 @@
             <div class="search-bar" onclick="activateSearch()">
                 <div class="search-container">
                     <img src="{{ url_for('static', filename='imgs/search-icon.png') }}" alt="Search Icon" class="search-icon">
-                    <input type="text" placeholder="Busca una canción..." id="search-input" oninput="showSearchResults()">
+                    <input type="text" placeholder="Busca una canción..." id="search-input">
                 </div>
             </div>
         </header>
@@ -72,33 +72,26 @@
         <!-- Resultados de búsqueda -->
         <div class="search-results" id="search-results">
             <div class="results-container">
-                <div class="artists-results">
-                    <h3>Artistas</h3>
-                    <ul id="artists-list">
-                        <!-- Los resultados de los artistas aparecerán aquí -->
-                    </ul>
-                </div>
-                <div class="albums-results">
-                    <h3>Álbumes</h3>
-                    <ul id="albums-list">
-                        <!-- Los resultados de las canciones aparecerán aquí -->
-                    </ul>
-                </div>
                 <div class="songs-results">
-                    <h3>Canciones</h3>
                     <ul id="songs-list">
                         <!-- Los resultados de las canciones aparecerán aquí -->
                     </ul>
                 </div>
+                <div class="artists-results">
+                    <ul id="artists-list">
+                        <!-- Los resultados de los artistas aparecerán aquí -->
+                    </ul>
+                </div>
             </div>
-            <a href="#" id="view-all-results">Ver todos los resultados</a>
+            <a href="#" id="view-all-results">Ver todos los resultados ></a>
         </div>
+
 
         <footer>
             <div class="player">
 
                 <div class="left-section">
-                    <img src="static/imgs/album-placeholder.png" alt="Album Cover">
+                    <img src="static/imgs/song-placeholder.png" alt="Album Cover">
                     <div class="song-info">
                         <span class="song-title">Escoge una canción</span>
                         <span class="song-artist">;P</span>
