@@ -1,3 +1,6 @@
+// ==========================================================
+// Variables Globales y Configuraciones
+// ==========================================================
 const rootStyles = getComputedStyle(document.documentElement);
 const musicList = document.getElementById('music-list');
 const currentSong = document.getElementById('current-song');
@@ -13,6 +16,10 @@ let audio = null;
 let debounceTimer;
 
 
+
+// ==========================================================
+// Funciones Utilitarias
+// ==========================================================
 function formatTime(seconds) {
     const minutes = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -20,101 +27,67 @@ function formatTime(seconds) {
 }
 
 function debounce(func, delay) {
-    return function(...args) {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => func.apply(this, args), delay);
-    };
-}
-
-
-
-
-function toggleSidebar() {
-    sidebar.classList.toggle('active');
-    logo.classList.toggle('active');
-}
-
-function activateSearch() {
-    document.getElementById('searchInput').focus();
-}
-
-
-
-// Simplificada función debounce
-function debounce(func, delay) {
     let timeout;
-    return function (...args) {
+    return function(...args) {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(this, args), delay);
     };
 }
 
-// La función que se ejecutará al buscar
-function showSearchResults() {
-    const searchInput = document.getElementById('search-input').value;
-    const searchResults = document.getElementById('search-results');
 
-    if (searchInput.length > 0) {
-        fetch(`/search?q=${searchInput}`)
-            .then(response => response.json())
-            .then(data => {
-                const artistsList = document.getElementById('artists-list');
-                const songsList = document.getElementById('songs-list');
 
-                // Limpiar listas anteriores
-                artistsList.innerHTML = '';
-                songsList.innerHTML = '';
+// ==========================================================
+// Funciones de la Barra de Progreso
+// ==========================================================
+function updateProgressBar() {
+    if (!audio) return;
 
-                // Añadir nuevos resultados
-                data.artists.forEach(artist => {
-                    const li = document.createElement('li');
-                    const img = document.createElement('img');
-                    img.src = artist.image_url ? artist.image_url : 'static/imgs/user-placeholder.png'; // Asegúrate de tener una imagen de reserva en caso de que no haya imagen del artista
-                    img.alt = artist.name;
-                    li.appendChild(img);
-                    const span = document.createElement('span');
-                    span.textContent = artist.name;
-                    li.appendChild(span);
-                    artistsList.appendChild(li);
-                });
+    const duration = audio.duration || 0; // Duración total de la canción
+    const currentTime = audio.currentTime || 0; // Tiempo actual de reproducción
+    const progressPercentage = (currentTime / duration) * 96 + 2 || 2; // Calcula el porcentaje de progreso
+    progressFill.style.width = `${progressPercentage}%`; // Actualiza la anchura de la barra de progreso
 
-                data.tracks.forEach(track => {
-                    const li = document.createElement('li');
-                    const img = document.createElement('img');
-                    img.src = track.image_url ? track.image_url : 'static/imgs/song-placeholder.png'; // Similarmente, una imagen de reserva para las canciones
-                    img.alt = track.name;
-                    li.appendChild(img);
-                    const span = document.createElement('span');
-                    span.textContent = track.name;
-                    li.appendChild(span);
-                    songsList.appendChild(li);
-                });
-
-                searchResults.style.opacity = "1";
-                searchResults.style.transform = "translateX(-50%) translateY(0);";
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-    } else {
-        searchResults.style.opacity = "0";
-        searchResults.style.transform = "translateX(-50%) translateY(-20px);";
-    }
+    currentTimeElement.textContent = formatTime(currentTime);
+    totalTimeElement.textContent = formatTime(duration);
 }
 
-const debouncedShowSearchResults = debounce(showSearchResults, 500);
+progressBar.addEventListener('click', (e) => {
+    const rect = progressBar.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const progressPercentage = (offsetX / rect.width) * 100;
+    const newTime = (progressPercentage / 100) * audio.duration;
+    progressFill.style.width = `${progressPercentage}%`;
+    audio.currentTime = newTime;
+    updateProgressBar();
+});
 
-document.getElementById('search-input').addEventListener('input', debouncedShowSearchResults);  // Asocia la función debounced al evento oninput
+progressBar.addEventListener('mousedown', () => {
+    const onMouseMove = (e) => {
+        const rect = progressBar.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        pauseAudio();
+        isPlaying = false;
+        if (offsetX >= 0 && offsetX <= rect.width) {
+            const progressPercentage = (offsetX / rect.width) * 100;
+            const newTime = (progressPercentage / 100) * audio.duration;
+            progressFill.style.width = `${progressPercentage}%`;
+            audio.currentTime = newTime;
+            updateProgressBar();
+        }
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', () => {
+        playAudio();
+        document.removeEventListener('mousemove', onMouseMove);
+    }, { once: true });
+});
 
 
-function hideSearchResults() {
-    const searchResults = document.getElementById('search-results');
-    searchResults.style.opacity = "0";
-    searchResults.style.transform = "translateX(-50%) translateY(-20px);";
-}
 
-
-
+// ==========================================================
+// Funciones de Reproducción de Audio
+// ==========================================================
 
 function playSong(song) {
     // Si ya hay una canción reproduciéndose, deténla y elimina la instancia
@@ -157,15 +130,12 @@ function pauseAudio() {
     updatePlayButton();
 }
 
-
 function togglePlay() {
-
-    if(isPlaying){
+    if (isPlaying) {
         audio.pause();
-    }else{
+    } else {
         audio.play();
     }
-
     isPlaying = !isPlaying;
     updatePlayButton();
 }
@@ -183,72 +153,91 @@ function updatePlayButton() {
     playButton.innerHTML = isPlaying ? pauseSVG : playSVG;
 }
 
-progressBar.addEventListener('click', (e) => {
-    const rect = progressBar.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const progressPercentage = (offsetX / rect.width) * 100;
-    const newTime = (progressPercentage / 100) * audio.duration;
-    progressFill.style.width = `${progressPercentage}%`;
-    audio.currentTime = newTime;
-    updateProgressBar();
-});
 
-progressBar.addEventListener('mousedown', () => {
-    const onMouseMove = (e) => {
-        const rect = progressBar.getBoundingClientRect();
-        const offsetX = e.clientX - rect.left;
-        pauseAudio()
-        isPlaying = false;
-        if (offsetX >= 0 && offsetX <= rect.width) {
-            const progressPercentage = (offsetX / rect.width) * 100;
-            const newTime = (progressPercentage / 100) * audio.duration;
-            progressFill.style.width = `${progressPercentage}%`;
-            audio.currentTime = newTime;
-            updateProgressBar();
-        }
-    };
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', () => {
-        playAudio();
-        document.removeEventListener('mousemove', onMouseMove);
-    }, { once: true });
-});
+// ==========================================================
+// Funciones de Búsqueda
+// ==========================================================
 
-// Función para actualizar la barra de progreso
-function updateProgressBar() {
+function showSearchResults() {
+    const searchInput = document.getElementById('search-input').value;
+    const searchResults = document.getElementById('search-results');
+    searchResults.style.opacity = "1";
+    searchResults.style.transform = "translateX(-50%) translateY(0);";
 
-    if (!audio) {
-        return;
+    if (searchInput.length > 0) {
+        fetch(`/search?q=${searchInput}`)
+            .then(response => response.json())
+            .then(data => {
+                const artistsList = document.getElementById('artists-list');
+                const songsList = document.getElementById('songs-list');
+
+                // Limpiar listas anteriores
+                artistsList.innerHTML = '';
+                songsList.innerHTML = '';
+
+                // Añadir nuevos resultados
+                data.artists.forEach(artist => {
+                    const li = document.createElement('li');
+                    const img = document.createElement('img');
+                    img.src = artist.image_url ? artist.image_url : 'static/imgs/user-placeholder.png'; // Asegúrate de tener una imagen de reserva en caso de que no haya imagen del artista
+                    img.alt = artist.name;
+                    li.appendChild(img);
+                    const span = document.createElement('span');
+                    span.textContent = artist.name;
+                    li.appendChild(span);
+                    artistsList.appendChild(li);
+                });
+
+                data.tracks.forEach(track => {
+                    const li = document.createElement('li');
+                    const img = document.createElement('img');
+                    img.src = track.image_url ? track.image_url : 'static/imgs/song-placeholder.png'; // Similarmente, una imagen de reserva para las canciones
+                    img.alt = track.name;
+                    li.appendChild(img);
+                    const span = document.createElement('span');
+                    span.textContent = track.name;
+                    li.appendChild(span);
+                    songsList.appendChild(li);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    } else {
+        searchResults.style.opacity = "0";
+        searchResults.style.transform = "translateX(-50%) translateY(-20px);";
     }
-
-    const duration = audio.duration || 0; // Duración total de la canción
-    const currentTime = audio.currentTime || 0; // Tiempo actual de reproducción
-    const progressPercentage = (currentTime / duration) * 96 + 2 || 2; // Calcula el porcentaje de progreso
-    progressFill.style.width = `${progressPercentage}%`; // Actualiza la anchura de la barra de progreso
-
-    currentTimeElement.textContent = formatTime(currentTime);
-    totalTimeElement.textContent = formatTime(duration);
 }
 
-audio.addEventListener('loadedmetadata', () => {
-    updateProgressBar();
-});
+const debouncedShowSearchResults = debounce(showSearchResults, 200);
 
-// Configura el intervalo para llamar a updateProgressBar cada segundo
-setInterval(updateProgressBar, 1000);
+document.getElementById('search-input').addEventListener('input', debouncedShowSearchResults);  // Asocia la función debounced al evento oninput
 
-// También puedes actualizar la barra de progreso durante el evento 'timeupdate'
-audio.addEventListener('timeupdate', updateProgressBar);
+function showResults() {
+    const searchResults = document.getElementById('search-results');
+    searchResults.style.opacity = "1";
+    searchResults.style.transform = "translateX(-50%) translateY(0);";
+}
+
+function hideSearchResults() {
+    const searchResults = document.getElementById('search-results');
+    searchResults.style.opacity = "0";
+    searchResults.style.transform = "translateX(-50%) translateY(-20px);";
+}
 
 
-// Envuelve showSearchResults en debounce
-document.getElementById('search-input').addEventListener('focus', showSearchResults);  // Cambia 'input' a 'focus'
-document.getElementById('search-input').addEventListener('blur', hideSearchResults);  // Agrega esta línea para ocultar los resultados al perder el foco
+
+// ==========================================================
+// Event Listeners
+// ==========================================================
+
+document.getElementById('search-input').addEventListener('focus', showSearchResults);  // Mostrar resultados al enfocar
+document.getElementById('search-input').addEventListener('blur', hideSearchResults);  // Ocultar resultados al perder el foco
 
 document.addEventListener('click', function(event) {
-    var sidebar = document.getElementById('sidebar');
-    var toggleButton = document.getElementById('toggle-button');
+    const sidebar = document.getElementById('sidebar');
+    const toggleButton = document.getElementById('toggle-button');
 
     // Verificar si el clic fue fuera del sidebar y del botón de toggle
     if (!sidebar.contains(event.target) && event.target !== toggleButton) {
@@ -264,9 +253,3 @@ window.addEventListener('scroll', function() {
         header.classList.remove('scrolled');
     }
 });
-
-
-
-/*window.onload = () => {
-    searchMusic();
-};*/

@@ -158,15 +158,15 @@ header.scrolled {
 .search-results {
     display: block;
     position: absolute;
-    top: 40px;
+    top: 60px;
     left: 50%;
     transform: translateX(-50%) translateY(-20px); /* Empieza más arriba */
     width: 80%;
-    max-width: 580px;
+    max-width: 620px;
     background-color: rgba(0,0,0,0.9);
     border-radius: 10px;
     padding: 20px; /* Padding dentro del contenedor */
-    padding-top: 60px;
+    padding-top: 40px;
     color: white;
     opacity: 0; /* Comienza transparente */
     transition: all 0.3s ease; /* Transiciones */
