@@ -124,7 +124,6 @@ def search_and_download_song(title, artist, album, genre, release_date, image_ur
         try:
             # Perform search and download
             info_dict = ydl.extract_info(search_query, download=True)
-            downloaded_title = info_dict['title']
             
             # Insertar en la base de datos
             insert_song(
@@ -138,7 +137,18 @@ def search_and_download_song(title, artist, album, genre, release_date, image_ur
                 preview_url=preview_url
             )
             
-            return downloaded_title
+            # Regresar un diccionario con todos los detalles de la canción
+            return {
+                "title": title,
+                "artist": artist,
+                "album": album,
+                "genre": genre,
+                "release_date": release_date,
+                "file_path": output_path,
+                "image_url": image_url,
+                "preview_url": preview_url
+            }
+        
         except Exception as e:
             print(f"Error: {e}")
             return None
@@ -264,13 +274,14 @@ def download_song():
         return jsonify({"error": "Missing title, artist, or album"}), 400
 
     output_dir = 'static/songs'
-    song_title = search_and_download_song(
+    song_data = search_and_download_song(
         title, artist, album, genre, release_date, image_url, preview_url, output_dir
     )
     
-    if song_title:
-        print(f"[INFO] Downloaded: {song_title}")
-        return jsonify({"message": f"Downloaded: {song_title}"}), 200
+    if song_data:
+        print(f"[INFO] Downloaded: {song_data['title']}")
+        return jsonify({"message": f"Downloaded: {song_data['title']}", "song": song_data}), 200
+
     else:
         print("[ERROR] Failed to download song")
         return jsonify({"error": "Failed to download song"}), 500

@@ -520,7 +520,7 @@ footer .player {
     align-items: center;
     width: 100px;
     height: 20px;
-    padding-right: 20px;
+    margin-right: 20px;
 }
 
 .volume {

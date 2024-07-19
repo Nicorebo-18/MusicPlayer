@@ -327,14 +327,8 @@ function handleSongClick(event) {
                         if (songInfo.error) {
                             console.log('Error al obtener la información de la canción: ' + songInfo.error);
                         } else {
-                            // Actualizar el footer con la canción existente
-                            updateFooter({
-                                title: songInfo.title,
-                                artist: songInfo.artist,
-                                image_url: songInfo.image_url
-                            });
                             // Reproducir la canción
-                            playSong(songInfo.file_url);
+                            playSong(songInfo.file_url, songInfo.file_path, songInfo.title, songInfo.artist, songInfo.image_url);
                         }
                     })
                     .catch(error => {
@@ -369,15 +363,10 @@ function handleSongClick(event) {
                 })
                 .then(data => {
                     if (data.message) {
-                        console.log(data.message); // Mostrar mensaje de éxito
-                        // Actualizar el footer con la nueva canción
-                        updateFooter({
-                            title: songName,
-                            artist: artist,
-                            image_url: songImageUrl
-                        });
+                        const songData = data.song;
+
                         // Reproducir la canción
-                        playSong(data.file_url);
+                        playSong(songData.file_path, songData.file_path, songData.title, songData.artist, songData.image_url);
                     } else {
                         console.log('Unexpected response format');
                     }
