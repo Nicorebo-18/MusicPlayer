@@ -291,6 +291,14 @@ function setupPreviewListeners() {
                     }
 
                     previewAudio = new Audio(previewUrl);
+
+                    if(audio){
+                        previewAudio.volume = audio.volume;
+                        audio.volume = 0.15;
+                    } else {
+                        previewAudio.volume = 1;
+                    }
+
                     previewAudio.play();
                 }, previewDelay);
             }
@@ -298,6 +306,14 @@ function setupPreviewListeners() {
 
         item.addEventListener('mouseout', () => {
             clearTimeout(previewTimeout); // Cancela el temporizador si el ratón sale antes de 2 segundos
+
+            if(audio){
+                if (previewAudio) {
+                    audio.volume = previewAudio.volume;
+                } else {
+                    audio.volume = 1;
+                }
+            }
 
             if (previewAudio) {
                 previewAudio.pause();
@@ -392,6 +408,11 @@ function hideSearchResults() {
     const searchResults = document.getElementById('search-results');
     searchResults.style.opacity = "0";
     searchResults.style.transform = "translateX(-50%) translateY(-20px);";
+
+    if (previewAudio) {
+        previewAudio.pause();
+        previewAudio = null;
+    }
 }
 
 function handleSongClick(event) {
@@ -469,10 +490,6 @@ function handleSongClick(event) {
 
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('songs-list').addEventListener('click', handleSongClick);
-});
-
 
 
 
@@ -480,8 +497,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // Event Listeners
 // ==========================================================
 
-// Agregar event listener a los elementos de la lista de canciones
-document.getElementById('songs-list').addEventListener('click', handleSongClick);
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('songs-list').addEventListener('click', handleSongClick);
+});
 
 document.getElementById('search-input').addEventListener('focus', showSearchResults);  // Mostrar resultados al enfocar
 document.getElementById('search-input').addEventListener('blur', hideSearchResults);  // Ocultar resultados al perder el foco

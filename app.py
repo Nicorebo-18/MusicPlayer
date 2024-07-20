@@ -205,8 +205,8 @@ def home():
         seed_artists = [f'spotify:artist:{song[9]}' for song in popular_songs if song[9]]
         
         recommendations = []
-        valid_track_uris = removeduplicates([track_uri for track_uri in seed_tracks if isinstance(track_uri, str) and track_uri.startswith('spotify:track:')])
-        valid_artist_uris = removeduplicates([artist_uri for artist_uri in seed_artists if isinstance(artist_uri, str) and artist_uri.startswith('spotify:artist:')])
+        valid_track_uris = removeduplicates([track_uri for track_uri in seed_tracks if isinstance(track_uri, str) and track_uri.startswith('spotify:track:')])[:3]
+        valid_artist_uris = removeduplicates([artist_uri for artist_uri in seed_artists if isinstance(artist_uri, str) and artist_uri.startswith('spotify:artist:')])[:2]
 
         search_params = {
             "min_danceability": 0.5, 
@@ -233,6 +233,10 @@ def home():
             {"title": song[1], "artist": song[2], "audio_file": song[6], "cover_url": song[7]}  # Asume que la columna 6 es el file_path y 7 es el image_url
             for song in get_recently_listened()
         ],
+        "Canciones que podrían gustarte": [
+            {"title": rec['name'], "artist": rec['artists'][0]['name'], "audio_file": rec['preview_url'], "cover_url": rec['album']['images'][0]['url']}
+            for rec in get_recommendations()
+        ],
         "Tus Favoritos": [
             {"title": song[1], "artist": song[2], "audio_file": song[6], "cover_url": song[7]}
             for song in get_favorites()
@@ -240,10 +244,6 @@ def home():
         "Descubrimientos Recientes": [
             {"title": song[1], "artist": song[2], "audio_file": song[6], "cover_url": song[7]}
             for song in get_recently_added()
-        ],
-        "Canciones que podrían gustarte": [
-            {"title": rec['name'], "artist": rec['artists'][0]['name'], "audio_file": rec['preview_url'], "cover_url": rec['album']['images'][0]['url']}
-            for rec in get_recommendations()
         ]
     }
 
