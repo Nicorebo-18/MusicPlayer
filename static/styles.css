@@ -18,7 +18,7 @@
 :root {
     --encore-body-font-stack: "CircularSp";
     --fallback-fonts: sans-serif;
-    --main-color: #e8a806; /*#1db954;*/
+    --main-color: rgb(167, 23, 64); /*#e8a806; /*#1db954;*/
 }
 
 html, body {
@@ -533,7 +533,7 @@ footer .player {
 }
 
 .volume-fill {
-    width: 50%; /* Initial volume level */
+    width: 100%; /* Initial volume level */
     height: 100%;
     background-color: #fff;
     border-radius: 4px;

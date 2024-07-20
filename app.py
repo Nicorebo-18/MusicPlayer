@@ -1,17 +1,22 @@
 from flask import Flask, render_template, jsonify, request
+from datetime import datetime
 from dotenv import load_dotenv
 from requests import post, get
+from spotipy.oauth2 import SpotifyClientCredentials
 import base64
 import json
 import os
+import spotipy
 import sqlite3
 import yt_dlp
 
+
 load_dotenv()
 app = Flask(__name__)
-
 client_id = os.getenv('CLIENT_ID')
 client_secret = os.getenv('CLIENT_SECRET')
+sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
+
 
 ### DATABASE FUNCTIONS ###
 
@@ -32,7 +37,13 @@ def create_database(db_path='database/songs.db'):
             release_date TEXT,
             file_path TEXT NOT NULL,
             image_url TEXT,
-            preview_url TEXT
+            preview_url TEXT,
+            spotify_artist_id TEXT,
+            spotify_track_id TEXT,
+            user_ids TEXT,
+            play_count INTEGER DEFAULT 0,
+            last_played TEXT,
+            added_date TEXT NOT NULL
         )
     ''')
 
@@ -41,21 +52,20 @@ def create_database(db_path='database/songs.db'):
     conn.close()
     print("Base de datos y tabla creadas con éxito en", db_path)
 
-def insert_song(title, artist, album, genre, release_date, file_path, image_url, preview_url, db_path='database/songs.db'):
-    # Conectar a la base de datos
-    conn = sqlite3.connect(db_path)
+def insert_song(title, artist, album, genre, release_date, file_path, image_url, preview_url, spotify_artist_id, spotify_track_id, user_ids, dbpath='database/songs.db'):
+    conn = sqlite3.connect(dbpath)
     cursor = conn.cursor()
 
-    # Insertar los datos
-    cursor.execute('''
-        INSERT INTO songs (title, artist, album, genre, release_date, file_path, image_url, preview_url)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (title, artist, album, genre, release_date, file_path, image_url, preview_url))
+    added_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Confirmar los cambios y cerrar la conexión
+    cursor.execute('''
+        INSERT INTO songs (title, artist, album, genre, release_date, file_path, image_url, preview_url, spotify_artist_id, spotify_track_id, user_ids, added_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (title, artist, album, genre, release_date, file_path, image_url, preview_url, spotify_artist_id, spotify_track_id, user_ids, added_date))
+
     conn.commit()
     conn.close()
-    print("Canción insertada con éxito.")
+
 
 def check_and_create_database(db_path='database/songs.db'):
     
@@ -99,7 +109,7 @@ def search_for_artist(token, artist_name):
     json_result = json.loads(result.content)
     print(json_result)
 
-def search_and_download_song(title, artist, album, genre, release_date, image_url, preview_url, output_dir):
+def search_and_download_song(title, artist, album, genre, release_date, image_url, preview_url, spotify_artist_id, spotify_track_id, user_ids, output_dir):
     search_query = f"{title} {artist} lyric"
     
     # Crear la ruta del directorio basado en Artista/Álbum
@@ -122,7 +132,7 @@ def search_and_download_song(title, artist, album, genre, release_date, image_ur
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
-            # Perform search and download
+            # Realizar la búsqueda y descarga
             info_dict = ydl.extract_info(search_query, download=True)
             
             # Insertar en la base de datos
@@ -134,7 +144,10 @@ def search_and_download_song(title, artist, album, genre, release_date, image_ur
                 release_date=release_date,
                 file_path=output_path,
                 image_url=image_url,
-                preview_url=preview_url
+                preview_url=preview_url,
+                spotify_artist_id=spotify_artist_id,
+                spotify_track_id=spotify_track_id,
+                user_ids=user_ids
             )
             
             # Regresar un diccionario con todos los detalles de la canción
@@ -146,7 +159,10 @@ def search_and_download_song(title, artist, album, genre, release_date, image_ur
                 "release_date": release_date,
                 "file_path": output_path,
                 "image_url": image_url,
-                "preview_url": preview_url
+                "preview_url": preview_url,
+                "spotify_artist_id": spotify_artist_id,
+                "spotify_track_id": spotify_track_id,
+                "user_ids": user_ids
             }
         
         except Exception as e:
@@ -158,37 +174,81 @@ def search_and_download_song(title, artist, album, genre, release_date, image_ur
 ### FLASK FUNCTIONS ###
 
 @app.route('/')
-def index():
-    # Datos simulados para las categorías de álbumes
+@app.route('/')
+def home():
+    # Conectar a la base de datos
+    conn = sqlite3.connect('database/songs.db')
+    cursor = conn.cursor()
+
+    # Obtener la lista de todas las canciones del usuario
+    cursor.execute('SELECT * FROM songs')
+    all_songs = cursor.fetchall()
+    conn.close()
+
+    # Funciones auxiliares
+    def get_recently_listened():
+        return sorted(all_songs, key=lambda x: x[7], reverse=True)[:10]  # Asume que la columna 7 es la fecha de la última reproducción
+
+    def get_favorites():
+        return sorted(all_songs, key=lambda x: x[8], reverse=True)[:10]  # Asume que la columna 8 es el número de reproducciones
+
+    def get_recently_added():
+        return sorted(all_songs, key=lambda x: x[6], reverse=True)[:10]  # Asume que la columna 6 es la fecha de adición (esto es opcional si tienes una columna para esto)
+
+    def removeduplicates(x):
+        return list(dict.fromkeys(x))
+
+    def get_recommendations():
+        # Obtener las canciones más populares para usar como semilla para las recomendaciones
+        popular_songs = sorted(all_songs, key=lambda x: x[8], reverse=True)[:5]  # Top 5 canciones más reproducidas
+        seed_tracks = [f'spotify:track:{song[10]}' for song in popular_songs if song[10]]
+        seed_artists = [f'spotify:artist:{song[9]}' for song in popular_songs if song[9]]
+        
+        recommendations = []
+        valid_track_uris = removeduplicates([track_uri for track_uri in seed_tracks if isinstance(track_uri, str) and track_uri.startswith('spotify:track:')])
+        valid_artist_uris = removeduplicates([artist_uri for artist_uri in seed_artists if isinstance(artist_uri, str) and artist_uri.startswith('spotify:artist:')])
+
+        search_params = {
+            "min_danceability": 0.5, 
+            "max_danceability": 1.0, 
+            "min_energy": 0.5, 
+            "max_energy": 1.0, 
+            "target_valence": 0.5
+            }
+        
+        # Hacer la llamada a la API de Spotify con las URIs válidas
+        try:
+            recs = sp.recommendations(seed_tracks=valid_track_uris, seed_artists=valid_artist_uris, limit=20, **search_params)['tracks']
+            recommendations = recs
+        except Exception as e:
+            print(f"Error obteniendo recomendaciones: {e}")
+            recommendations = []
+
+        return recommendations
+
+
+    # Crear las categorías
     categorias = {
         "Escuchado Recientemente": [
-            {"title": "Clancy", "artist": "Twenty One Pilots", "audio_file": "static/songs/Twenty One Pilots/Clancy/Vignette.mp3", "cover_url": "https://www.emp-online.es/dw/image/v2/BBQV_PRD/on/demandware.static/-/Sites-master-emp/default/dw7f84522c/images/5/6/9/1/569187.jpg?sfrm=png"},
-            {"title": "Álbum 2", "cover_url": ""},
-            {"title": "Álbum 1", "cover_url": ""},
-            {"title": "Álbum 2", "cover_url": ""},
-            {"title": "Álbum 1", "cover_url": ""},
-            {"title": "Álbum 2", "cover_url": ""},
-            {"title": "Álbum 1", "cover_url": ""},
-            {"title": "Álbum 2", "cover_url": ""},
-            {"title": "Álbum 1", "cover_url": ""},
-            {"title": "Álbum 2", "cover_url": ""},
-            {"title": "Álbum 1", "cover_url": ""},
-            {"title": "Álbum 2", "cover_url": ""},
-            {"title": "Álbum 3", "cover_url": ""}
+            {"title": song[1], "artist": song[2], "audio_file": song[6], "cover_url": song[7]}  # Asume que la columna 6 es el file_path y 7 es el image_url
+            for song in get_recently_listened()
         ],
         "Tus Favoritos": [
-            {"title": "Álbum 4", "cover_url": ""},
-            {"title": "Álbum 5", "cover_url": ""},
-            {"title": "Álbum 6", "cover_url": ""}
+            {"title": song[1], "artist": song[2], "audio_file": song[6], "cover_url": song[7]}
+            for song in get_favorites()
         ],
         "Descubrimientos Recientes": [
-            {"title": "Álbum 7", "cover_url": ""},
-            {"title": "Álbum 8", "cover_url": ""},
-            {"title": "Álbum 9", "cover_url": ""}
+            {"title": song[1], "artist": song[2], "audio_file": song[6], "cover_url": song[7]}
+            for song in get_recently_added()
+        ],
+        "Canciones que podrían gustarte": [
+            {"title": rec['name'], "artist": rec['artists'][0]['name'], "audio_file": rec['preview_url'], "cover_url": rec['album']['images'][0]['url']}
+            for rec in get_recommendations()
         ]
     }
 
     return render_template('index.html', categorias=categorias)
+
 
 
 
@@ -204,7 +264,8 @@ def search():
     
     results = {
         'tracks': [],
-        'artists': []
+        'artists': [],
+        'albums': []  # Añadir sección para álbumes
     }
     
     # Procesar canciones
@@ -213,22 +274,46 @@ def search():
         image_url = album_images[1]['url'] if len(album_images) > 1 else ''  # URL de imagen de tamaño mediano
         
         results['tracks'].append({
+            'id': item['id'],  # ID de la canción
             'name': item['name'],
             'artist': item['artists'][0]['name'],
+            'artist_id': item['artists'][0]['id'],  # ID del artista
             'album': item['album']['name'],
+            'album_id': item['album']['id'],  # ID del álbum
             'preview_url': item['preview_url'],
             'image_url': image_url
         })
     
+    # Procesar artistas
     for item in data['artists']['items']:
         results['artists'].append({
+            'id': item['id'],  # ID del artista
             'name': item['name'],
             'genres': item['genres'],
             'followers': item['followers']['total'],
             'image_url': item['images'][0]['url'] if item['images'] else None
         })
     
+    # Obtener detalles del álbum (agregar información sobre álbumes)
+    for item in data['tracks']['items']:
+        album_id = item['album']['id']
+        if album_id not in [album['id'] for album in results['albums']]:
+            album_details_url = f"https://api.spotify.com/v1/albums/{album_id}"
+            album_response = get(album_details_url, headers=headers)
+            album_data = album_response.json()
+            album_images = album_data['images']
+            album_image_url = album_images[1]['url'] if len(album_images) > 1 else ''  # URL de imagen de tamaño mediano
+            
+            results['albums'].append({
+                'id': album_data['id'],  # ID del álbum
+                'name': album_data['name'],
+                'release_date': album_data['release_date'],
+                'total_tracks': album_data['total_tracks'],
+                'image_url': album_image_url
+            })
+    
     return jsonify(results)
+
 
 @app.route('/check_song', methods=['GET'])
 def check_song():
@@ -245,7 +330,8 @@ def check_song():
 
     # Verificar si la canción ya está en la base de datos
     cursor.execute('''
-        SELECT * FROM songs
+        SELECT title, artist, album, file_path, image_url
+        FROM songs
         WHERE title = ? AND artist = ? AND album = ?
     ''', (title, artist, album))
     song = cursor.fetchone()
@@ -253,7 +339,14 @@ def check_song():
     conn.close()
 
     if song:
-        return jsonify({"exists": True, "song": song}), 200
+        song_info = {
+            'title': song[0],
+            'artist': song[1],
+            'album': song[2],
+            'file_url': song[3],
+            'image_url': song[4]
+        }
+        return jsonify({"exists": True, "song": song_info}), 200
     else:
         return jsonify({"exists": False}), 200
 
@@ -261,7 +354,9 @@ def check_song():
 def download_song():
     data = request.json
     title = data.get('title')
+    track_id = data.get('song_id')
     artist = data.get('artist')
+    artist_id = data.get('artist_id')
     album = data.get('album')
     genre = data.get('genre', '')  # Valor predeterminado vacío si no se proporciona
     release_date = data.get('release_date', '')  # Valor predeterminado vacío si no se proporciona
@@ -273,9 +368,9 @@ def download_song():
         print("[ERROR] Missing title, artist, or album")
         return jsonify({"error": "Missing title, artist, or album"}), 400
 
-    output_dir = 'static/songs'
+    output_dir = 'static/songs/'
     song_data = search_and_download_song(
-        title, artist, album, genre, release_date, image_url, preview_url, output_dir
+        title, artist, album, genre, release_date, image_url, preview_url, artist_id, track_id, "Nicorebo18", output_dir
     )
     
     if song_data:
@@ -285,34 +380,6 @@ def download_song():
     else:
         print("[ERROR] Failed to download song")
         return jsonify({"error": "Failed to download song"}), 500
-    
-@app.route('/get_song_info', methods=['GET'])
-def get_song_info():
-    title = request.args.get('title')
-    artist = request.args.get('artist')
-    album = request.args.get('album')
-
-    conn = sqlite3.connect('database/songs.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT title, artist, album, file_path, image_url
-        FROM songs
-        WHERE title = ? AND artist = ? AND album = ?
-    ''', (title, artist, album))
-    row = cursor.fetchone()
-    conn.close()
-
-    if row:
-        song_info = {
-            'title': row[0],
-            'artist': row[1],
-            'album': row[2],
-            'file_url': row[3],
-            'image_url': row[4]
-        }
-        return jsonify(song_info)
-    else:
-        return jsonify({'error': 'Song not found'}), 404
 
 
 
