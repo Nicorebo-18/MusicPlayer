@@ -2,3 +2,4 @@ static/songs/
 database/
 static/fonts/CircularSpUIv3T-Bold.zip
 static/fonts/SF-Pro-Text-Regular.otf
+.cache
