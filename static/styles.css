@@ -227,6 +227,67 @@ header.scrolled {
     border-radius: 5px; /* Miniaturas cuadradas para canciones */
 }
 
+.img-container {
+    position: relative;
+    display: inline-block;
+}
+
+.img-container img {
+    display: block;
+    filter: brightness(100%);
+    transition: filter 0.5s ease;
+}
+
+.img-container.darkened img {
+    filter: brightness(50%);
+}
+
+/* Círculo de progreso */
+.progress-circle {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 30px;
+    height: 30px;
+    z-index: 10;
+    transition: transform 0.5s ease, border-color 0.5s ease;
+}
+
+.progress-circle svg {
+    width: 100%;
+    height: 100%;
+}
+
+.circular-progress {
+    --size: 24px;
+    --stroke-width: 3px;
+    --radius: calc((var(--size) - var(--stroke-width)) / 2);
+    --circumference: calc(var(--radius) * 2 * 3.14159265359);
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.circular-progress circle {
+    fill: none;
+    stroke-width: var(--stroke-width);
+    stroke-linecap: round;
+}
+
+.circular-progress circle.bg {
+    stroke: rgba(255, 255, 255, 0.5); /* Fondo del círculo con opacidad */
+}
+
+.circular-progress circle.fg {
+    stroke: white;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    stroke-dasharray: var(--circumference);
+    stroke-dashoffset: var(--circumference);
+    transition: stroke-dashoffset 0.3s linear;
+}
+
+
 #view-all-results {
     display: block;
     margin-top: 10px;
@@ -594,7 +655,6 @@ footer .player {
     color: white;
     font-size: 14px;
     width: 100%;
-    height: 20px;
     /*padding: 5px; /* Espacio interno alrededor del texto */
 }
 
@@ -604,8 +664,7 @@ footer .player {
     color: rgba(255, 255, 255, 0.7);
     font-size: 10px;
     width: 100%;
-    height: 20px;
-    /*padding: 5px; /* Espacio interno alrededor del texto */
+    padding: 3px 0;
 }
 
 

@@ -260,7 +260,7 @@ function updateMediaSession(songmeta) {
 
         navigator.mediaSession.setActionHandler('play', () => playAudio());
         navigator.mediaSession.setActionHandler('pause', () => pauseAudio());
-        //navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+        //navigator.mediaSession.setActionHandler('seekbackward', (details) => {items
         //    // Implement seek back functionality
         //});
         //navigator.mediaSession.setActionHandler('seekforward', (details) => {
@@ -273,6 +273,26 @@ function updateMediaSession(songmeta) {
             // Implement next track functionality
         });
     }
+}
+
+function updateProgressCircle(circle, progress) {
+    const fgCircle = circle.querySelector('.fg');
+
+    if (!fgCircle || fgCircle.getTotalLength === undefined) {
+        return;
+    }
+
+    // Asegúrate de que el progreso esté entre 0 y 1
+    progress = Math.max(0, Math.min(progress, 1));
+
+    if (progress < 0) progress = 0;
+    if (progress > 0.99) progress = 1;
+
+    const circumference = fgCircle.getTotalLength();
+    const offset = circumference * (1 - progress) + 9;
+
+    // Actualiza el stroke-dashoffset del círculo de progreso
+    fgCircle.style.strokeDashoffset = offset;
 }
 
 function setupPreviewListeners() {
@@ -300,6 +320,40 @@ function setupPreviewListeners() {
                     }
 
                     previewAudio.play();
+                    let progress = 0;
+
+                    // Añadir el círculo de progreso
+                    const imgContainer = li.querySelector('.img-container');
+                    if (imgContainer) {
+                        imgContainer.classList.add('darkened');
+
+                        let circle = imgContainer.querySelector('.progress-circle');
+                        if (!circle) {
+                            circle = document.createElement('div');
+                            circle.className = 'progress-circle';
+                            circle.innerHTML = `
+                                <svg class="circular-progress" viewBox="0 0 24 24">
+                                    <circle class="bg" cx="12" cy="12" r="9"></circle>
+                                    <circle class="fg" cx="12" cy="12" r="9"></circle>
+                                </svg>`;
+                            imgContainer.appendChild(circle);
+                        }
+
+                        previewAudio.addEventListener('timeupdate', () => {
+                            if (previewAudio) {
+                                progress = previewAudio.currentTime / 30;
+                                updateProgressCircle(circle, progress);
+                            }
+                        });
+
+                        previewAudio.addEventListener('ended', () => {
+                            if (circle) {
+                                circle.remove();
+                            }
+                            imgContainer.classList.remove('darkened');
+                        });
+                    }
+
                 }, previewDelay);
             }
         });
@@ -318,6 +372,18 @@ function setupPreviewListeners() {
             if (previewAudio) {
                 previewAudio.pause();
                 previewAudio = null;
+            }
+
+            // Eliminar el círculo de progreso al salir del elemento
+            const imgContainer = item.querySelector('.img-container');
+            if (imgContainer) {
+                const circle = imgContainer.querySelector('.progress-circle');
+
+                if (circle) {
+                    circle.remove();
+                }
+
+                imgContainer.classList.remove('darkened');
             }
         });
     });
@@ -373,12 +439,16 @@ function showSearchResults() {
                     li.dataset.artistId = track.artist_id || '';
                     li.dataset.albumId = track.album_id || '';
 
+                    const imgContainer = document.createElement('div');
+                    imgContainer.className = 'img-container';
+
                     const img = document.createElement('img');
                     img.src = track.image_url ? track.image_url : 'static/imgs/song-placeholder.png'; // Similarmente, una imagen de reserva para las canciones
                     img.alt = track.name;
-                    li.appendChild(img);
                     const span = document.createElement('span');
                     span.textContent = track.name;
+                    imgContainer.appendChild(img);
+                    li.appendChild(imgContainer);
                     li.appendChild(span);
                     songsList.appendChild(li);
                 });

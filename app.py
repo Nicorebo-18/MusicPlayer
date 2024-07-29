@@ -169,13 +169,7 @@ def search_and_download_song(title, artist, album, genre, release_date, image_ur
             print(f"Error: {e}")
             return None
         
-
-
-### FLASK FUNCTIONS ###
-
-@app.route('/')
-@app.route('/')
-def home():
+def get_recommendations():
     # Conectar a la base de datos
     conn = sqlite3.connect('database/songs.db')
     cursor = conn.cursor()
@@ -186,6 +180,45 @@ def home():
     conn.close()
 
     # Funciones auxiliares
+    def removeduplicates(x):
+        return list(dict.fromkeys(x))
+
+    # Obtener las canciones más populares para usar como semilla para las recomendaciones
+    popular_songs = sorted(all_songs, key=lambda x: x[8], reverse=True)[:5]  # Top 5 canciones más reproducidas
+    seed_tracks = [f'spotify:track:{song[10]}' for song in popular_songs if song[10]]
+    seed_artists = [f'spotify:artist:{song[9]}' for song in popular_songs if song[9]]
+
+    valid_track_uris = removeduplicates([track_uri for track_uri in seed_tracks if track_uri.startswith('spotify:track:')])[:3]
+    valid_artist_uris = removeduplicates([artist_uri for artist_uri in seed_artists if artist_uri.startswith('spotify:artist:')])[:2]
+
+    search_params = {
+        "min_danceability": 0.5, 
+        "max_danceability": 1.0, 
+        "min_energy": 0.5, 
+        "max_energy": 1.0, 
+        "target_valence": 0.5
+    }
+
+    # Hacer la llamada a la API de Spotify con las URIs válidas
+    try:
+        recs = sp.recommendations(seed_tracks=valid_track_uris, seed_artists=valid_artist_uris, limit=20, **search_params)['tracks']
+        recommendations = recs
+    except Exception as e:
+        print(f"Error obteniendo recomendaciones: {e}")
+        recommendations = []
+
+    return recommendations
+
+def update_feed():
+    # Conectar a la base de datos
+    conn = sqlite3.connect('database/songs.db')
+    cursor = conn.cursor()
+
+    # Obtener la lista de todas las canciones del usuario
+    cursor.execute('SELECT * FROM songs')
+    all_songs = cursor.fetchall()
+    conn.close()
+
     def get_recently_listened():
         return sorted(all_songs, key=lambda x: x[7], reverse=True)[:10]  # Asume que la columna 7 es la fecha de la última reproducción
 
@@ -195,39 +228,6 @@ def home():
     def get_recently_added():
         return sorted(all_songs, key=lambda x: x[6], reverse=True)[:10]  # Asume que la columna 6 es la fecha de adición (esto es opcional si tienes una columna para esto)
 
-    def removeduplicates(x):
-        return list(dict.fromkeys(x))
-
-    def get_recommendations():
-        # Obtener las canciones más populares para usar como semilla para las recomendaciones
-        popular_songs = sorted(all_songs, key=lambda x: x[8], reverse=True)[:5]  # Top 5 canciones más reproducidas
-        seed_tracks = [f'spotify:track:{song[10]}' for song in popular_songs if song[10]]
-        seed_artists = [f'spotify:artist:{song[9]}' for song in popular_songs if song[9]]
-        
-        recommendations = []
-        valid_track_uris = removeduplicates([track_uri for track_uri in seed_tracks if isinstance(track_uri, str) and track_uri.startswith('spotify:track:')])[:3]
-        valid_artist_uris = removeduplicates([artist_uri for artist_uri in seed_artists if isinstance(artist_uri, str) and artist_uri.startswith('spotify:artist:')])[:2]
-
-        search_params = {
-            "min_danceability": 0.5, 
-            "max_danceability": 1.0, 
-            "min_energy": 0.5, 
-            "max_energy": 1.0, 
-            "target_valence": 0.5
-            }
-        
-        # Hacer la llamada a la API de Spotify con las URIs válidas
-        try:
-            recs = sp.recommendations(seed_tracks=valid_track_uris, seed_artists=valid_artist_uris, limit=20, **search_params)['tracks']
-            recommendations = recs
-        except Exception as e:
-            print(f"Error obteniendo recomendaciones: {e}")
-            recommendations = []
-
-        return recommendations
-
-
-    # Crear las categorías
     categorias = {
         "Escuchado Recientemente": [
             {"title": song[1], "artist": song[2], "audio_file": song[6], "cover_url": song[7]}  # Asume que la columna 6 es el file_path y 7 es el image_url
@@ -247,9 +247,16 @@ def home():
         ]
     }
 
+    return categorias
+
+
+
+### FLASK FUNCTIONS ###
+
+@app.route('/')
+def home():
+    categorias = update_feed()
     return render_template('index.html', categorias=categorias)
-
-
 
 
 @app.route('/search', methods=['GET'])
