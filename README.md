@@ -1,10 +1,10 @@
-# MusicPlayer
+# Music® by Nicorebo18
 
-![MusicPlayer Logo](static/images/logo.png)
+![Music® Logo](static/imgs/logo.png)
 
 ## Description
 
-MusicPlayer is a web application that allows users to search, download, and play songs. It uses the Spotify API to fetch song information and metadata, enabling users to create custom playlists. The application also offers recommendations based on recently played and downloaded songs.
+Music® is a web application that allows users to search, download, and play songs. It uses the Spotify API to fetch song information and metadata, enabling users to create custom playlists. The application also offers recommendations based on recently played and downloaded songs.
 
 ## Features
 
@@ -28,4 +28,16 @@ MusicPlayer is a web application that allows users to search, download, and play
 ```bash
 git clone https://github.com/Nicorebo-18/MusicPlayer.git
 cd MusicPlayer
+```
 
+### Environment Configuration
+Create a .env file in the root directory of the project and add your Spotify API credentials:
+```bash
+CLIENT_ID="your_client_id"
+CLIENT_SECRET="your_client_secret"
+```
+
+### Install Dependencies
+```bash
+pip install -r requirements.txt
+```
