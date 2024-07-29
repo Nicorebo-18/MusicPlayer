@@ -3,3 +3,5 @@ database/
 static/fonts/CircularSpUIv3T-Bold.zip
 static/fonts/SF-Pro.dmg
 .cache
+.tests
+__pycache__
