@@ -121,6 +121,7 @@ def search_and_download_song(title, artist, album, genre, release_date, image_ur
     
     # Establecer la ruta completa del archivo
     output_path = os.path.join(album_dir, f"{title}.mp3")
+    output_path = os.path.normpath(output_path).replace('\\', '/')
     
     ydl_opts = {
         'format': 'bestaudio/best',
