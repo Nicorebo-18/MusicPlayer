@@ -5,3 +5,5 @@ static/fonts/SF-Pro.dmg
 .cache
 .tests
 __pycache__
+.env
+git-filter-repo
