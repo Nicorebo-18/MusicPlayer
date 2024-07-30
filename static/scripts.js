@@ -103,6 +103,7 @@ progressBar.addEventListener('mousedown', () => {
 // ==========================================================
 
 function playSong(song, title, artist, imageUrl, otherdata = null) {
+
     // Si ya hay una canción reproduciéndose, deténla y elimina la instancia
     if (audio) {
         audio.pause();
@@ -401,6 +402,7 @@ function setupPreviewListeners() {
 function showSearchResults() {
     const searchInput = document.getElementById('search-input').value;
     const searchResults = document.getElementById('search-results');
+    searchResults.style.display = "block";
     searchResults.style.opacity = "1";
     searchResults.style.transform = "translateX(-50%) translateY(0);";
 
@@ -459,6 +461,7 @@ function showSearchResults() {
                 console.error('Error:', error);
             });
     } else {
+        searchResults.style.display = "none";
         searchResults.style.opacity = "0";
         searchResults.style.transform = "translateX(-50%) translateY(-20px);";
     }
@@ -471,6 +474,7 @@ document.getElementById('search-input').addEventListener('input', debouncedShowS
 function showResults() {
     const searchResults = document.getElementById('search-results');
     searchResults.style.opacity = "1";
+    searchResults.style.display = "block";
     searchResults.style.transform = "translateX(-50%) translateY(0);";
 }
 
@@ -483,6 +487,10 @@ function hideSearchResults() {
         previewAudio.pause();
         previewAudio = null;
     }
+
+    setTimeout(function() {
+        searchResults.style.display = "none";
+    }, 500);
 }
 
 function handleSongClick(event) {
@@ -597,7 +605,7 @@ function updateCategories(categorias) {
         const itemsDiv = $('<div>').addClass('items');
         if (items.length) {
             items.forEach(item => {
-                const coverDiv = $('<div>').addClass('cover').attr('onclick', `playSong('${item.audio_file}')`);
+                const coverDiv = $('<div>').addClass('cover').attr('onclick', `playSong('${item.audio_file}', '${item.title}', '${item.artist}', '${item.cover_url}', ${JSON.stringify(item)})`);
                 
                 const img = $('<img>').attr('src', item.cover_url || 'static/imgs/placeholder.gif').attr('alt', item.title);
                 coverDiv.append(img);

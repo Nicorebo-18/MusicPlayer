@@ -156,7 +156,7 @@ header.scrolled {
 }
 
 .search-results {
-    display: block;
+    display: none;
     position: absolute;
     top: 60px;
     left: 50%;
@@ -168,7 +168,7 @@ header.scrolled {
     padding: 20px; /* Padding dentro del contenedor */
     padding-top: 40px;
     color: white;
-    opacity: 0; /* Comienza transparente */
+    opacity: 0;
     transition: all 0.3s ease; /* Transiciones */
     box-sizing: border-box; /* Incluye padding y border en el tamaño total del contenedor */
 }
