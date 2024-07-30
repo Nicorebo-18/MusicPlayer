@@ -6,6 +6,7 @@
     <title>Music®</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="icon" type="image/x-icon" href="static/imgs/icon.ico">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body>
     <div id="app">
@@ -33,40 +34,9 @@
         </div>
 
         <main> 
-            {% for categoria, items in categorias.items() %}
-                <div class="category">
-                    <h2>{{ categoria|capitalize }}</h2>
-                    <div class="items">
-                        {% if items %}
-                            {% for item in items %}
-                                <div class="cover" onclick="playSong('{{ item.audio_file }}')">
-                                    {% if item.cover_url %}
-                                        <img src="{{ item.cover_url }}" alt="{{ item.title }}">
-                                    {% else %}
-                                        <img src="static/imgs/placeholder.gif" alt="Loading">
-                                    {% endif %}
-                                    <div class="title">
-                                        {% if item.title %}
-                                            {{ item.title }}
-                                        {% else %}
-                                            Loading...
-                                        {% endif %}
-                                    </div>
-                                    <div class="artist">
-                                        {% if item.artist %}
-                                            {{ item.artist }}
-                                        {% else %}
-                                            Unknown
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <p>No hay álbumes disponibles en esta categoría.</p>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endfor %}
+            <div id="categories-container">
+                <!-- Content will be dynamically loaded here -->
+            </div>
         </main>
 
         <!-- Resultados de búsqueda -->

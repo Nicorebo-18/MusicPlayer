@@ -41,3 +41,19 @@ CLIENT_SECRET="your_client_secret"
 ```bash
 pip install -r requirements.txt
 ```
+
+### Contributing
+If you want to contribute to this project, please follow these steps:
+
+1. Fork the project.
+2. Create a new branch (git checkout -b feature/new-feature).
+3. Make your changes and commit them (git commit -m 'Add new feature').
+4. Push to the branch (git push origin feature/new-feature).
+5. Open a Pull Request.
+
+### License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+### Contact
+Creator: Nicorebo18
+If you have any questions or suggestions, feel free to contact me.

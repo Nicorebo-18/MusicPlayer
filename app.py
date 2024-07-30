@@ -256,9 +256,15 @@ def update_feed():
 
 @app.route('/')
 def home():
-    categorias = update_feed()
-    return render_template('index.html', categorias=categorias)
+    return render_template('index.html')
 
+@app.route('/categories', methods=['GET'])
+def get_categories():
+    categorias = update_feed()
+    categorias_list = [
+        {'categoria': k, 'items': v} for k, v in categorias.items()
+    ]
+    return jsonify(categorias_list)
 
 @app.route('/search', methods=['GET'])
 def search():

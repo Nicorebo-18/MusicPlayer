@@ -542,6 +542,7 @@ function handleSongClick(event) {
                         console.log('Canción descargada:', songData.title);
                         // Reproducir la canción
                         playSong(songData.file_path, songData.title, songData.artist, songData.image_url, songData);
+                        loadCategories();
                     } else {
                         console.log('Unexpected response format');
                     }
@@ -555,6 +556,67 @@ function handleSongClick(event) {
             console.error('Error:', error);
             console.log('Error checking song existence: ' + error.message);
         });
+}
+
+
+
+
+// ==========================================================
+// Categories Loader
+// ==========================================================
+
+$(document).ready(function() {
+    loadCategories();
+});
+
+function loadCategories() {
+    $.ajax({
+        url: '/categories',
+        type: 'GET',
+        success: function(response) {
+            updateCategories(response);
+        },
+        error: function(error) {
+            console.error('Error loading categories:', error);
+        }
+    });
+}
+
+// Function to update the categories and songs in the HTML
+function updateCategories(categorias) {
+    const container = $('#categories-container');
+    container.empty();  // Clear the current content
+
+    categorias.forEach(categoryData => {
+        const { categoria, items } = categoryData;
+
+        const categoryDiv = $('<div>').addClass('category').attr('id', categoria);
+        const categoryHeader = $('<h2>').text(categoria.charAt(0).toUpperCase() + categoria.slice(1));
+        categoryDiv.append(categoryHeader);
+
+        const itemsDiv = $('<div>').addClass('items');
+        if (items.length) {
+            items.forEach(item => {
+                const coverDiv = $('<div>').addClass('cover').attr('onclick', `playSong('${item.audio_file}')`);
+                
+                const img = $('<img>').attr('src', item.cover_url || 'static/imgs/placeholder.gif').attr('alt', item.title);
+                coverDiv.append(img);
+
+                const titleDiv = $('<div>').addClass('title').text(item.title || 'Loading...');
+                coverDiv.append(titleDiv);
+
+                const artistDiv = $('<div>').addClass('artist').text(item.artist || 'Unknown');
+                coverDiv.append(artistDiv);
+
+                itemsDiv.append(coverDiv);
+            });
+        } else {
+            itemsDiv.append($('<p>').text('No albums available in this category.'));
+        }
+
+        categoryDiv.append(itemsDiv);
+        container.append(categoryDiv);
+    });
 }
 
 
